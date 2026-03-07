@@ -1,4 +1,4 @@
-Cài đặt ban đầu
+Cài đặt ban đầu để khởi tạo ban đầu
     # tạo thư mục
     mkdir backend frontend
 
@@ -30,3 +30,21 @@ Chạy chương trình
         Web sẽ chạy tại http://localhost:3000
 
 
+Các bước:
+    # Tải code về máy (Clone)
+    git clone https://github.com/nguyenhieu126/Robot_Control_Web.git
+    cd Robot_Control_Web
+
+    # cài đặt các thư viện
+        cd backend
+        npm install
+        cd ../frontend
+        npm install
+
+    # chạy chương trình
+        Backend
+            cd backend
+            node server.js
+        Frontend
+            cd frontend
+            npm start
