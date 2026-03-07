@@ -1,0 +1,96 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const pool = require('./config/db');
+
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const detectionRoutes = require('./routes/detectionRoutes');
+const abandonedEventRoutes = require('./routes/abandonedEventRoutes');
+const manualCommandRoutes = require('./routes/manualCommandRoutes');
+const robotLogRoutes = require('./routes/robotLogRoutes');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// API Routes
+app.use('/api/users', userRoutes);
+app.use('/api/detections', detectionRoutes);
+app.use('/api/events', abandonedEventRoutes);
+app.use('/api/commands', manualCommandRoutes);
+app.use('/api/logs', robotLogRoutes);
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Database health check
+app.get('/api/db-health', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT NOW()');
+        res.json({
+            status: 'OK',
+            database: 'Connected',
+            timestamp: result.rows[0].now
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            database: 'Disconnected',
+            error: error.message
+        });
+    }
+});
+
+// API overview
+app.get('/api', (req, res) => {
+    res.json({
+        name: 'Robot Control System API',
+        version: '1.0.0',
+        endpoints: {
+            users: '/api/users',
+            detections: '/api/detections',
+            events: '/api/events',
+            commands: '/api/commands',
+            logs: '/api/logs',
+            health: '/api/health',
+            dbHealth: '/api/db-health'
+        }
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Endpoint not found'
+    });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).json({
+        success: false,
+        error: err.message || 'Internal server error'
+    });
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`📊 API Overview: http://localhost:${PORT}/api`);
+    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🗄️  Database Health: http://localhost:${PORT}/api/db-health`);
+});
