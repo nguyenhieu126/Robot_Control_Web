@@ -32,8 +32,8 @@ Chạy chương trình
 
 Các bước:
     # Tải code về máy (Clone)
-    git clone https://github.com/nguyenhieu126/Robot_Control_Web.git
-    cd Robot_Control_Web
+        git clone https://github.com/nguyenhieu126/Robot_Control_Web.git
+        cd Robot_Control_Web
 
     # cài đặt các thư viện
         cd backend

@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── SPLASH ROOT ── */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #050d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Exo 2', sans-serif;
+  overflow: hidden;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.splash--fadeout {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* ── BACKGROUND GRID ── */
+.splash-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,195,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,195,0.04) 1px, transparent 1px);
+  background-size: 52px 52px;
+  animation: grid-drift 20s linear infinite;
+}
+
+@keyframes grid-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 52px 52px; }
+}
+
+/* ── AMBIENT GLOWS ── */
+.splash-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.splash-glow--tl {
+  width: 600px; height: 600px;
+  top: -200px; left: -200px;
+  background: radial-gradient(ellipse, rgba(76,201,255,0.07) 0%, transparent 65%);
+  animation: glow-breathe 6s ease-in-out infinite alternate;
+}
+
+.splash-glow--br {
+  width: 500px; height: 500px;
+  bottom: -150px; right: -100px;
+  background: radial-gradient(ellipse, rgba(0,229,195,0.06) 0%, transparent 65%);
+  animation: glow-breathe 8s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes glow-breathe {
+  from { opacity: 0.5; }
+  to   { opacity: 1; }
+}
+
+/* ── SCAN LINE ── */
+.splash-scanline {
+  position: absolute;
+  top: -2px;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,195,0.5), transparent);
+  animation: scan 5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  from { top: -2px; opacity: 0.8; }
+  to   { top: 100vh; opacity: 0.2; }
+}
+
+/* ── CONTENT WRAPPER ── */
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.splash-content--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── LOGO ASSEMBLY ── */
+.splash-logo-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rotating rings */
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ring--outer {
+  inset: -8px;
+  border: 2px solid transparent;
+  border-top-color: #00e5c3;
+  border-right-color: rgba(0,229,195,0.3);
+  animation: spin-cw 4s linear infinite;
+}
+
+.ring--inner {
+  inset: 4px;
+  border: 1.5px solid transparent;
+  border-bottom-color: #4cc9ff;
+  border-left-color: rgba(76,201,255,0.25);
+  animation: spin-ccw 6s linear infinite;
+}
+
+.ring--pulse {
+  inset: -20px;
+  border: 1px solid rgba(0,229,195,0.15);
+  animation: pulse-ring 3s ease-in-out infinite;
+}
+
+@keyframes spin-cw  { to { transform: rotate(360deg); } }
+@keyframes spin-ccw { to { transform: rotate(-360deg); } }
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50%       { transform: scale(1.06); opacity: 0.35; }
+}
+
+/* Circle container */
+.splash-logo-circle {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 3px rgba(0,229,195,0.5),
+    0 0 40px rgba(0,229,195,0.25),
+    0 0 80px rgba(76,201,255,0.12),
+    inset 0 0 30px rgba(0,0,0,0.5);
+  position: relative;
+  animation: logo-float 4s ease-in-out infinite;
+}
+
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.logo-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── TITLE ── */
+.splash-title {
+  text-align: center;
+  line-height: 1;
+}
+
+.splash-name {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 0 0 6px;
+}
+
+.splash-name__kali {
+  color: #4cc9ff;
+}
+
+.splash-name__vega {
+  color: #00e5c3;
+}
+
+.splash-sub {
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── PROGRESS BAR ── */
+.splash-bar-wrap {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.splash-bar-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+}
+
+.splash-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a6bff, #00e5c3);
+  border-radius: 99px;
+  transition: width 0.12s linear;
+  position: relative;
+}
+
+/* Bright leading edge */
+.splash-bar-glow {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 10px;
+  background: radial-gradient(ellipse, rgba(0,229,195,0.9) 0%, transparent 80%);
+  border-radius: 50%;
+}
+
+.splash-status {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 1px;
+  font-family: 'JetBrains Mono', monospace;
+  height: 16px;
+  transition: opacity 0.3s;
+}
