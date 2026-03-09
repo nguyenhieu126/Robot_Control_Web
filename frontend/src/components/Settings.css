@@ -1,0 +1,458 @@
+/* Settings shares the same font/token imports as Dashboard */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ══════════════════════════════════════
+   CSS VARIABLES — DARK (default)
+══════════════════════════════════════ */
+.settings-page {
+  --bg:            #050d1a;
+  --bg-card:       rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --border:        rgba(255,255,255,0.08);
+  --border-subtle: rgba(255,255,255,0.06);
+  --text-primary:  #f0f6ff;
+  --text-secondary:#8899b0;
+  --text-muted:    #4a5f78;
+  --grid-color:    rgba(76,201,255,0.025);
+  --glow-tl:       rgba(76,201,255,0.055);
+  --glow-br:       rgba(0,229,195,0.04);
+  --toggle-off:    rgba(255,255,255,0.1);
+  --toggle-border: rgba(255,255,255,0.1);
+  --delete-bg:     rgba(255,80,80,0.08);
+  --delete-border: rgba(255,80,80,0.12);
+  --delete-color:  rgba(255,120,120,0.7);
+  --delete-hover-bg:     rgba(255,80,80,0.18);
+  --delete-hover-border: rgba(255,80,80,0.35);
+  --chevron-color: #4a5f78;
+  --version-title: #8899b0;
+  --version-num:   #4a5f78;
+  --back-bg:       rgba(255,255,255,0.05);
+  --back-border:   rgba(255,255,255,0.09);
+}
+
+/* ══════════════════════════════════════
+   CSS VARIABLES — LIGHT
+══════════════════════════════════════ */
+.settings-page--light {
+  --bg:            #eef2f8;
+  --bg-card:       rgba(255,255,255,0.85);
+  --bg-card-hover: rgba(255,255,255,1);
+  --border:        rgba(0,0,0,0.08);
+  --border-subtle: rgba(0,0,0,0.06);
+  --text-primary:  #0d1b2e;
+  --text-secondary:#4a6080;
+  --text-muted:    #8099b8;
+  --grid-color:    rgba(26,107,255,0.04);
+  --glow-tl:       rgba(76,201,255,0.08);
+  --glow-br:       rgba(0,229,195,0.06);
+  --toggle-off:    rgba(0,0,0,0.12);
+  --toggle-border: rgba(0,0,0,0.08);
+  --delete-bg:     rgba(220,50,50,0.07);
+  --delete-border: rgba(220,50,50,0.15);
+  --delete-color:  #cc4444;
+  --delete-hover-bg:     rgba(220,50,50,0.14);
+  --delete-hover-border: rgba(220,50,50,0.3);
+  --chevron-color: #8099b8;
+  --version-title: #4a6080;
+  --version-num:   #8099b8;
+  --back-bg:       rgba(0,0,0,0.05);
+  --back-border:   rgba(0,0,0,0.1);
+}
+
+/* ── PAGE BASE ── */
+.settings-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Exo 2', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+/* ── BACKGROUND GRID ── */
+.settings-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+  transition: background-image 0.35s;
+}
+
+/* Light mode grid is slightly more visible */
+.settings-page--light .settings-grid {
+  background-image:
+    linear-gradient(rgba(26,107,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,107,255,0.06) 1px, transparent 1px);
+}
+
+/* ── AMBIENT GLOWS ── */
+.settings-glow {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.35s;
+}
+.settings-glow--tl {
+  width: 700px; height: 500px;
+  top: -180px; left: -200px;
+  background: radial-gradient(ellipse, var(--glow-tl) 0%, transparent 65%);
+}
+.settings-glow--br {
+  width: 500px; height: 500px;
+  bottom: -150px; right: -100px;
+  background: radial-gradient(ellipse, var(--glow-br) 0%, transparent 65%);
+}
+
+/* ── INNER ── */
+.settings-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 44px 40px;
+}
+
+/* ── HEADER ── */
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.back-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--back-bg);
+  border: 1px solid var(--back-border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.back-btn:hover {
+  background: rgba(76,201,255,0.12);
+  border-color: rgba(76,201,255,0.3);
+  color: #4cc9ff;
+}
+
+.settings-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 2px;
+  color: var(--text-primary);
+}
+
+.settings-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ── TWO COLUMNS ── */
+.settings-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 780px) {
+  .settings-columns { grid-template-columns: 1fr; }
+  .settings-inner { padding: 24px 16px; }
+}
+
+/* ── SECTION LABEL ── */
+.settings-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  transition: color 0.3s;
+}
+
+/* ── GROUP CARD ── */
+.settings-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  transition: background 0.35s, border-color 0.35s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+/* ── ROW ── */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  transition: background 0.2s;
+}
+
+.settings-row--nav { cursor: pointer; }
+.settings-row--nav:hover { background: var(--bg-card-hover); }
+.settings-row--bordered { border-bottom: 1px solid var(--border-subtle); }
+
+.settings-row-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  transition: background 0.35s;
+}
+
+.settings-row-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-row-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color 0.3s;
+}
+
+.settings-row-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  transition: color 0.3s;
+}
+
+.chevron {
+  color: var(--chevron-color);
+  flex-shrink: 0;
+  transition: color 0.3s;
+}
+
+/* ── TOGGLE ── */
+.toggle {
+  width: 52px;
+  height: 28px;
+  border-radius: 99px;
+  background: var(--toggle-off);
+  border: 1px solid var(--toggle-border);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+
+.toggle--on {
+  background: linear-gradient(90deg, #1a6bff, #00e5c3);
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(0,229,195,0.3);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+.toggle--on .toggle-thumb {
+  transform: translateX(24px);
+}
+
+/* ── PROFILES HEADER ── */
+.settings-profiles-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+
+.add-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a6bff, #00e5c3);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(26,107,255,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.add-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(26,107,255,0.5);
+}
+
+/* ── PROFILE ROW ── */
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-row:hover,
+.profile-row--expanded { background: var(--bg-card-hover); }
+
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.profile-avatar--active {
+  background: linear-gradient(135deg, rgba(26,107,255,0.25), rgba(0,229,195,0.15));
+  border-color: rgba(0,229,195,0.4);
+  color: #00e5c3;
+  box-shadow: 0 0 12px rgba(0,229,195,0.15);
+}
+
+.profile-text { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+
+.profile-name-row { display: flex; align-items: center; gap: 8px; }
+
+.profile-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color 0.3s;
+}
+
+.profile-active-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #00e5c3;
+  background: rgba(0,229,195,0.12);
+  border: 1px solid rgba(0,229,195,0.25);
+  border-radius: 99px;
+  padding: 2px 8px;
+  letter-spacing: 0.5px;
+}
+
+.profile-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+.delete-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--delete-bg);
+  border: 1px solid var(--delete-border);
+  color: var(--delete-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.delete-btn:hover {
+  background: var(--delete-hover-bg);
+  border-color: var(--delete-hover-border);
+  color: #ff6b6b;
+}
+
+.profile-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0 20px;
+}
+
+.profile-switch-wrap { padding: 0 16px 16px; }
+
+.profile-switch-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Exo 2', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.profile-switch-btn:hover {
+  background: rgba(76,201,255,0.1);
+  border-color: rgba(76,201,255,0.25);
+  color: #4cc9ff;
+}
+
+.empty-msg {
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── VERSION CARD ── */
+.version-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background 0.35s, border-color 0.35s;
+}
+
+.version-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--version-title);
+  transition: color 0.3s;
+}
+
+.version-num {
+  font-size: 12px;
+  color: var(--version-num);
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.3s;
+}

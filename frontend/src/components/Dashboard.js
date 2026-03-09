@@ -48,11 +48,16 @@ const MENU_ITEMS = [
   },
 ];
 
-function Dashboard() {
+function Dashboard({ onNavigate, darkMode = true }) {
   const [size, setSize] = useState("XL");
+  const theme = darkMode ? "dark" : "light";
+
+  const handleCardClick = (id) => {
+    if (id === "settings" && onNavigate) onNavigate("settings");
+  };
 
   return (
-    <div className={`dashboard size-${size.toLowerCase()}`}>
+    <div className={`dashboard size-${size.toLowerCase()} dashboard--${theme}`}>
       <div className="dashboard-inner">
 
         {/* ── HEADER ── */}
@@ -137,7 +142,7 @@ function Dashboard() {
           <p className="section-label">Navigation</p>
           <div className="menu">
             {MENU_ITEMS.map((item) => (
-              <div key={item.id} className={`card ${item.cls}`}>
+              <div key={item.id} className={`card ${item.cls}`} onClick={() => handleCardClick(item.id)}>
                 <div className="icon-badge">{item.icon}</div>
                 <span className="card-label">{item.label}</span>
                 <span className="card-desc">{item.desc}</span>

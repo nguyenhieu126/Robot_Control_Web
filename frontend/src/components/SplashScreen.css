@@ -1,17 +1,60 @@
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ── THEME VARIABLES ── */
+.splash--dark {
+  --splash-bg:         #050d1a;
+  --splash-grid:       rgba(0,229,195,0.04);
+  --splash-glow-tl:    rgba(76,201,255,0.07);
+  --splash-glow-br:    rgba(0,229,195,0.06);
+  --splash-ring-outer: #00e5c3;
+  --splash-ring-inner: #4cc9ff;
+  --splash-ring-pulse: rgba(0,229,195,0.15);
+  --splash-circle-bg:  #0a1628;
+  --splash-circle-stroke: #00e5c3;
+  --splash-arc1:       #1a3a6b;
+  --splash-arc2:       #0c2548;
+  --splash-name-kali:  #4cc9ff;
+  --splash-name-vega:  #00e5c3;
+  --splash-sub:        rgba(255,255,255,0.45);
+  --splash-status:     rgba(255,255,255,0.35);
+  --splash-bar-track:  rgba(255,255,255,0.08);
+  --splash-scanline:   rgba(0,229,195,0.5);
+  --splash-shadow:     0 0 40px rgba(0,229,195,0.25);
+}
+
+.splash--light {
+  --splash-bg:         #dce8f5;
+  --splash-grid:       rgba(26,107,255,0.06);
+  --splash-glow-tl:    rgba(26,107,255,0.1);
+  --splash-glow-br:    rgba(0,180,160,0.08);
+  --splash-ring-outer: #1a6bff;
+  --splash-ring-inner: #00c6a0;
+  --splash-ring-pulse: rgba(26,107,255,0.12);
+  --splash-circle-bg:  #c8daf0;
+  --splash-circle-stroke: #1a6bff;
+  --splash-arc1:       #90b4d8;
+  --splash-arc2:       #b0cce8;
+  --splash-name-kali:  #1a6bff;
+  --splash-name-vega:  #007a60;
+  --splash-sub:        rgba(13,27,46,0.5);
+  --splash-status:     rgba(13,27,46,0.4);
+  --splash-bar-track:  rgba(0,0,0,0.1);
+  --splash-scanline:   rgba(26,107,255,0.4);
+  --splash-shadow:     0 0 40px rgba(26,107,255,0.2);
+}
+
 /* ── SPLASH ROOT ── */
 .splash {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #050d1a;
+  background: var(--splash-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Exo 2', sans-serif;
   overflow: hidden;
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition: opacity 0.7s ease, transform 0.7s ease, background 0.4s ease;
 }
 
 .splash--fadeout {
@@ -25,8 +68,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0,229,195,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,195,0.04) 1px, transparent 1px);
+    linear-gradient(var(--splash-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--splash-grid) 1px, transparent 1px);
   background-size: 52px 52px;
   animation: grid-drift 20s linear infinite;
 }
@@ -46,14 +89,14 @@
 .splash-glow--tl {
   width: 600px; height: 600px;
   top: -200px; left: -200px;
-  background: radial-gradient(ellipse, rgba(76,201,255,0.07) 0%, transparent 65%);
+  background: radial-gradient(ellipse, var(--splash-glow-tl) 0%, transparent 65%);
   animation: glow-breathe 6s ease-in-out infinite alternate;
 }
 
 .splash-glow--br {
   width: 500px; height: 500px;
   bottom: -150px; right: -100px;
-  background: radial-gradient(ellipse, rgba(0,229,195,0.06) 0%, transparent 65%);
+  background: radial-gradient(ellipse, var(--splash-glow-br) 0%, transparent 65%);
   animation: glow-breathe 8s ease-in-out infinite alternate-reverse;
 }
 
@@ -68,7 +111,7 @@
   top: -2px;
   left: 0; right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0,229,195,0.5), transparent);
+  background: linear-gradient(90deg, transparent, var(--splash-scanline), transparent);
   animation: scan 5s linear infinite;
   pointer-events: none;
 }
@@ -114,22 +157,22 @@
 .ring--outer {
   inset: -8px;
   border: 2px solid transparent;
-  border-top-color: #00e5c3;
-  border-right-color: rgba(0,229,195,0.3);
+  border-top-color: var(--splash-ring-outer);
+  border-right-color: color-mix(in srgb, var(--splash-ring-outer) 30%, transparent);
   animation: spin-cw 4s linear infinite;
 }
 
 .ring--inner {
   inset: 4px;
   border: 1.5px solid transparent;
-  border-bottom-color: #4cc9ff;
-  border-left-color: rgba(76,201,255,0.25);
+  border-bottom-color: var(--splash-ring-inner);
+  border-left-color: color-mix(in srgb, var(--splash-ring-inner) 25%, transparent);
   animation: spin-ccw 6s linear infinite;
 }
 
 .ring--pulse {
   inset: -20px;
-  border: 1px solid rgba(0,229,195,0.15);
+  border: 1px solid var(--splash-ring-pulse);
   animation: pulse-ring 3s ease-in-out infinite;
 }
 
@@ -148,12 +191,12 @@
   border-radius: 50%;
   overflow: hidden;
   box-shadow:
-    0 0 0 3px rgba(0,229,195,0.5),
-    0 0 40px rgba(0,229,195,0.25),
-    0 0 80px rgba(76,201,255,0.12),
-    inset 0 0 30px rgba(0,0,0,0.5);
+    0 0 0 3px color-mix(in srgb, var(--splash-ring-outer) 50%, transparent),
+    var(--splash-shadow),
+    inset 0 0 30px rgba(0,0,0,0.3);
   position: relative;
   animation: logo-float 4s ease-in-out infinite;
+  transition: box-shadow 0.4s;
 }
 
 @keyframes logo-float {
@@ -179,18 +222,13 @@
   margin: 0 0 6px;
 }
 
-.splash-name__kali {
-  color: #4cc9ff;
-}
-
-.splash-name__vega {
-  color: #00e5c3;
-}
+.splash-name__kali { color: var(--splash-name-kali); }
+.splash-name__vega { color: var(--splash-name-vega); }
 
 .splash-sub {
   font-size: 15px;
   font-weight: 400;
-  color: rgba(255,255,255,0.45);
+  color: var(--splash-sub);
   letter-spacing: 4px;
   text-transform: uppercase;
   font-family: 'JetBrains Mono', monospace;
@@ -198,7 +236,7 @@
 
 /* ── PROGRESS BAR ── */
 .splash-bar-wrap {
-  width: 320px;
+  width: 480px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -207,8 +245,8 @@
 
 .splash-bar-track {
   width: 100%;
-  height: 3px;
-  background: rgba(255,255,255,0.08);
+  height: 5px;
+  background: var(--splash-bar-track);
   border-radius: 99px;
   overflow: hidden;
   position: relative;
@@ -218,7 +256,7 @@
   height: 100%;
   background: linear-gradient(90deg, #1a6bff, #00e5c3);
   border-radius: 99px;
-  transition: width 0.12s linear;
+  transition: width 0.08s linear;
   position: relative;
 }
 
@@ -236,7 +274,7 @@
 
 .splash-status {
   font-size: 12px;
-  color: rgba(255,255,255,0.35);
+  color: var(--splash-status);
   letter-spacing: 1px;
   font-family: 'JetBrains Mono', monospace;
   height: 16px;

@@ -21,6 +21,41 @@
   --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
 }
 
+/* ── LIGHT THEME OVERRIDES ── */
+.dashboard--light {
+  --bg-deep: #dce8f5;
+  --bg-mid:  #ccdaec;
+  --bg-card: rgba(255,255,255,0.75);
+  --bg-card-hover: rgba(255,255,255,0.95);
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(26,107,255,0.35);
+  --text-primary: #0d1b2e;
+  --text-secondary: #4a6080;
+  --text-muted: #7a90aa;
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.dashboard--light::before {
+  background-image:
+    linear-gradient(rgba(26,107,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,107,255,0.05) 1px, transparent 1px);
+}
+
+.dashboard--light::after {
+  background: radial-gradient(ellipse, rgba(76,201,255,0.1) 0%, transparent 70%);
+}
+
+.dashboard--light .logo-text h1     { color: #1a6bff; }
+.dashboard--light .logo-text p      { color: #7a90aa; }
+.dashboard--light .size-btn         { color: #7a90aa; }
+.dashboard--light .size-btn.active,
+.dashboard--light .size-btn:hover   { color: #1a6bff; }
+.dashboard--light .connection-stat label { color: #7a90aa; }
+.dashboard--light .connection-stat .val.neutral { color: #0d1b2e; }
+.dashboard--light .section-label    { color: #7a90aa; }
+.dashboard--light .card-label       { color: #0d1b2e; }
+.dashboard--light .card-desc        { color: #7a90aa; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Viewport size variants ── */
@@ -31,6 +66,7 @@
   font-family: 'Exo 2', sans-serif;
   position: relative;
   overflow-x: hidden;
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
 /* Background grid texture */

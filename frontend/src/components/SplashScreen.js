@@ -1,58 +1,79 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./SplashScreen.css";
 
-const STEPS = [
-  "Initializing system...",
-  "Loading calibration data...",
-  "Connecting to controller...",
-  "Syncing BLE protocol...",
-  "Ready.",
+// Each stage: [targetPercent, pauseMs, stepLabel]
+const STAGES = [
+  { target: 20,  pause: 700,  text: "Initializing system..." },
+  { target: 50,  pause: 900,  text: "Loading calibration data..." },
+  { target: 80,  pause: 800,  text: "Connecting to controller..." },
+  { target: 100, pause: 500,  text: "Ready." },
 ];
 
-function SplashScreen({ onFinish }) {
+// Speed (% per ms) while bar is moving between stages
+const SPEED = 0.045;
+
+function SplashScreen({ onFinish, darkMode = true }) {
   const [progress, setProgress] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
+  const [statusText, setStatusText] = useState("Initializing system...");
   const [fadeOut, setFadeOut] = useState(false);
   const [logoReady, setLogoReady] = useState(false);
   const rafRef = useRef(null);
-  const startRef = useRef(null);
-  const DURATION = 2000; // ms total for progress bar
+  const stageRef = useRef(0);       // current stage index
+  const pausingRef = useRef(false); // true while waiting at a checkpoint
+  const progressRef = useRef(0);    // live progress value
+  const lastTsRef = useRef(null);
 
   useEffect(() => {
-    // Logo entrance delay
     const t = setTimeout(() => setLogoReady(true), 100);
     return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
-    // Smooth progress bar
-    const animate = (ts) => {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = ts - startRef.current;
-      const p = Math.min((elapsed / DURATION) * 100, 100);
-      setProgress(p);
+    const tick = (ts) => {
+      if (!lastTsRef.current) lastTsRef.current = ts;
+      const dt = ts - lastTsRef.current;
+      lastTsRef.current = ts;
 
-      // Update step text based on progress
-      const si = Math.min(Math.floor((p / 100) * STEPS.length), STEPS.length - 1);
-      setStepIndex(si);
-
-      if (p < 100) {
-        rafRef.current = requestAnimationFrame(animate);
-      } else {
-        // Pause at 100% then fade out
-        setTimeout(() => {
-          setFadeOut(true);
-          setTimeout(onFinish, 700);
-        }, 400);
+      if (pausingRef.current) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
       }
+
+      const stage = STAGES[stageRef.current];
+      const next = Math.min(progressRef.current + SPEED * dt, stage.target);
+      progressRef.current = next;
+      setProgress(next);
+
+      if (next >= stage.target) {
+        // Reached checkpoint — pause
+        pausingRef.current = true;
+        const nextStage = stageRef.current + 1;
+
+        if (nextStage >= STAGES.length) {
+          // All done
+          setTimeout(() => {
+            setFadeOut(true);
+            setTimeout(onFinish, 700);
+          }, stage.pause);
+          return;
+        }
+
+        setTimeout(() => {
+          stageRef.current = nextStage;
+          setStatusText(STAGES[nextStage].text);
+          pausingRef.current = false;
+        }, stage.pause);
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
 
-    rafRef.current = requestAnimationFrame(animate);
+    rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, [onFinish]);
 
   return (
-    <div className={`splash${fadeOut ? " splash--fadeout" : ""}`}>
+    <div className={`splash splash--${darkMode ? "dark" : "light"}${fadeOut ? " splash--fadeout" : ""}`}>
       {/* Background grid */}
       <div className="splash-grid" />
 
@@ -77,51 +98,45 @@ function SplashScreen({ onFinish }) {
           {/* SVG logo — circuit trident */}
           <div className="splash-logo-circle">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="logo-svg">
-              {/* Outer circle */}
-              <circle cx="100" cy="100" r="90" fill="#0a1628" stroke="#00e5c3" strokeWidth="3" />
-
-              {/* Circuit arc decorations */}
-              <circle cx="100" cy="100" r="82" fill="none" stroke="#1a3a6b" strokeWidth="8" strokeDasharray="30 12" />
-              <circle cx="100" cy="100" r="72" fill="none" stroke="#0c2548" strokeWidth="14" />
-              <circle cx="100" cy="100" r="68" fill="none" stroke="#00e5c3" strokeWidth="1.5" strokeDasharray="20 8" opacity="0.6" />
-
-              {/* Small circuit dots */}
+              <circle cx="100" cy="100" r="90"
+                fill={darkMode ? "#0a1628" : "#c0d8f0"}
+                stroke={darkMode ? "#00e5c3" : "#1a6bff"} strokeWidth="3" />
+              <circle cx="100" cy="100" r="82" fill="none"
+                stroke={darkMode ? "#1a3a6b" : "#90b4d8"} strokeWidth="8" strokeDasharray="30 12" />
+              <circle cx="100" cy="100" r="72" fill="none"
+                stroke={darkMode ? "#0c2548" : "#b0cce8"} strokeWidth="14" />
+              <circle cx="100" cy="100" r="68" fill="none"
+                stroke={darkMode ? "#00e5c3" : "#1a6bff"} strokeWidth="1.5" strokeDasharray="20 8" opacity="0.6" />
               {[0,60,120,180,240,300].map((a,i) => (
-                <circle
-                  key={i}
+                <circle key={i}
                   cx={100 + 82 * Math.cos((a * Math.PI) / 180)}
                   cy={100 + 82 * Math.sin((a * Math.PI) / 180)}
                   r="3"
-                  fill="#00e5c3"
-                  opacity="0.8"
-                />
+                  fill={darkMode ? "#00e5c3" : "#1a6bff"} opacity="0.8" />
               ))}
-
-              {/* Lightning bolt */}
               <polygon
                 points="90,140 105,100 95,100 110,60 85,105 97,105 80,140"
-                fill="url(#boltGrad)"
-                opacity="0.9"
-              />
-
-              {/* Trident */}
+                fill="url(#boltGrad)" opacity="0.9" />
               <g transform="translate(108, 55)" opacity="0.9">
-                <line x1="10" y1="0" x2="10" y2="52" stroke="#c8d8ef" strokeWidth="3" strokeLinecap="round" />
-                <line x1="10" y1="0" x2="4" y2="14" stroke="#c8d8ef" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="10" y1="0" x2="16" y2="14" stroke="#c8d8ef" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="4" y1="8" x2="4" y2="0" stroke="#c8d8ef" strokeWidth="2" strokeLinecap="round" />
-                <line x1="16" y1="8" x2="16" y2="0" stroke="#c8d8ef" strokeWidth="2" strokeLinecap="round" />
-                {/* Handle grip rings */}
+                <line x1="10" y1="0" x2="10" y2="52"
+                  stroke={darkMode ? "#c8d8ef" : "#4a6080"} strokeWidth="3" strokeLinecap="round" />
+                <line x1="10" y1="0" x2="4" y2="14"
+                  stroke={darkMode ? "#c8d8ef" : "#4a6080"} strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="10" y1="0" x2="16" y2="14"
+                  stroke={darkMode ? "#c8d8ef" : "#4a6080"} strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="4" y1="8" x2="4" y2="0"
+                  stroke={darkMode ? "#c8d8ef" : "#4a6080"} strokeWidth="2" strokeLinecap="round" />
+                <line x1="16" y1="8" x2="16" y2="0"
+                  stroke={darkMode ? "#c8d8ef" : "#4a6080"} strokeWidth="2" strokeLinecap="round" />
                 {[32,38,44].map((y,i) => (
-                  <rect key={i} x="7" y={y} width="6" height="2.5" rx="1" fill="#7090c0" />
+                  <rect key={i} x="7" y={y} width="6" height="2.5" rx="1"
+                    fill={darkMode ? "#7090c0" : "#5a80a0"} />
                 ))}
               </g>
-
-              {/* Gradient defs */}
               <defs>
                 <linearGradient id="boltGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#4cc9ff" />
-                  <stop offset="100%" stopColor="#00e5c3" />
+                  <stop offset="0%" stopColor={darkMode ? "#4cc9ff" : "#1a6bff"} />
+                  <stop offset="100%" stopColor={darkMode ? "#00e5c3" : "#00a884"} />
                 </linearGradient>
               </defs>
             </svg>
@@ -144,7 +159,7 @@ function SplashScreen({ onFinish }) {
               <div className="splash-bar-glow" />
             </div>
           </div>
-          <p className="splash-status">{STEPS[stepIndex]}</p>
+          <p className="splash-status">{statusText}</p>
         </div>
 
       </div>
