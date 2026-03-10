@@ -117,8 +117,15 @@ function ManualControl({ onBack, darkMode = true }) {
     const next = isManual ? 'AUTONOMOUS' : 'MANUAL';
     if (!isManual) await sendCommand('STOP', null);   // dừng trước khi MANUAL
     await setMode(next);
-    setTimeout(() => setToggling(false), 600);
+    // Không cần timeout cố định - UI sẽ tự cập nhật khi nhận STATUS từ ESP32
   }, [isManual, sendCommand, setMode]);
+
+  // Tự động tắt toggling state khi mode đã thay đổi
+  useEffect(() => {
+    if (toggling) {
+      setToggling(false);
+    }
+  }, [robotStatus.mode]);
 
   const handleStop = useCallback(() => {
     sendDirect('STOP', null);
@@ -168,13 +175,13 @@ function ManualControl({ onBack, darkMode = true }) {
           className={`mc-mode-btn ${isManual ? 'mode-is-manual' : 'mode-is-auto'} ${toggling ? 'mode-busy' : ''}`}
           onClick={handleToggleMode}
           disabled={toggling}
-          title={`Chuyển sang ${isManual ? 'AUTONOMOUS' : 'MANUAL'}`}
+          title={`Hiện tại: ${isManual ? 'MANUAL' : 'AUTONOMOUS'}. Nhấn để chuyển sang ${isManual ? 'AUTONOMOUS' : 'MANUAL'}`}
         >
           {toggling
             ? <span className="mc-spin" />
             : isManual
-              ? <><span className="mc-mode-icon">⚡</span> AUTO MODE</>
-              : <><span className="mc-mode-icon">✋</span> MANUAL MODE</>
+              ? <><span className="mc-mode-icon">✋</span> MANUAL MODE</>
+              : <><span className="mc-mode-icon">⚡</span> AUTO MODE</>
           }
         </button>
       </header>
@@ -217,7 +224,8 @@ function ManualControl({ onBack, darkMode = true }) {
           {!isManual && (
             <div className="mc-joy-lock">
               <span className="mc-joy-lock-icon">🔒</span>
-              <span>Switch to MANUAL to drive</span>
+              <span>Chế độ AUTONOMOUS đang hoạt động</span>
+              <span style={{fontSize: '12px', opacity: 0.7}}>Nhấn nút MANUAL MODE để điều khiển thủ công</span>
             </div>
           )}
         </div>
