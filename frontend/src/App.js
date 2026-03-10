@@ -48,6 +48,8 @@ import React, { useState, useEffect } from "react";
 import SplashScreen from "./components/SplashScreen";
 import Dashboard from "./components/Dashboard";
 import Settings from "./components/Settings";
+import ManualControl from "./components/ManualControl";
+import Connect from "./components/Connect";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -84,6 +86,20 @@ function App() {
         <Settings
           darkMode={darkMode}
           onDarkModeChange={setDarkMode}
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
+      {!showSplash && page === "manual" && (
+        <ManualControl
+          darkMode={darkMode}
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
+      {!showSplash && page === "connect" && (
+        <Connect
+          darkMode={darkMode}
           onBack={() => setPage("dashboard")}
         />
       )}

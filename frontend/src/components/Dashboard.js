@@ -54,6 +54,9 @@ function Dashboard({ onNavigate, darkMode = true }) {
 
   const handleCardClick = (id) => {
     if (id === "settings" && onNavigate) onNavigate("settings");
+    if (id === "manual"   && onNavigate) onNavigate("manual");
+    if (id === "auto"     && onNavigate) onNavigate("manual");  // auto card cũng vào manual để toggle
+    if (id === "connect"  && onNavigate) onNavigate("connect");
   };
 
   return (

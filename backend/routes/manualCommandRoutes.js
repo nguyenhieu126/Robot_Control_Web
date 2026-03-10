@@ -1,7 +1,8 @@
 // Manual Command Routes
-const express = require('express');
-const router = express.Router();
+const express    = require('express');
+const router     = express.Router();
 const ManualCommandModel = require('../models/manualCommandModel');
+const wsManager  = require('../services/wsManager');
 
 // GET /api/commands - Lấy tất cả commands
 router.get('/', async (req, res) => {
@@ -55,7 +56,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST /api/commands - Tạo command mới
+// POST /api/commands - Tạo command mới (và push realtime tới ESP32 qua WS)
 router.post('/', async (req, res) => {
     try {
         const { userId, command, parameters } = req.body;
@@ -63,7 +64,15 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
         }
         const newCommand = await ManualCommandModel.createCommand(userId, command, parameters);
-        res.status(201).json({ success: true, data: newCommand });
+
+        // Thử gửi ngay qua WebSocket — nếu ESP32 đang kết nối, lệnh tới trong <1ms
+        const wsSent = wsManager.sendCommandToRobot(newCommand);
+
+        res.status(201).json({
+            success: true,
+            data: newCommand,
+            wsSent,   // true nếu ESP32 đang kết nối và đã nhận qua WS
+        });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
