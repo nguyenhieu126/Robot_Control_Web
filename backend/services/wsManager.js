@@ -37,9 +37,28 @@ let robotStatus = {
 // ══════════════════════════════════════════════════════════════
 function init(server) {
 
-  // ── /ws/robot — ESP32 ──────────────────────────────────────
-  robotWss = new WebSocket.Server({ server, path: '/ws/robot' });
+  // ── Tạo WebSocket servers ở noServer mode ─────────────────
+  robotWss     = new WebSocket.Server({ noServer: true });
+  dashboardWss = new WebSocket.Server({ noServer: true });
 
+  // ── Handle HTTP upgrade request và route theo path ────────
+  server.on('upgrade', (request, socket, head) => {
+    const pathname = new URL(request.url, 'http://localhost').pathname;
+
+    if (pathname === '/ws/robot') {
+      robotWss.handleUpgrade(request, socket, head, (ws) => {
+        robotWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/dashboard') {
+      dashboardWss.handleUpgrade(request, socket, head, (ws) => {
+        dashboardWss.emit('connection', ws, request);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
+
+  // ── /ws/robot — ESP32 ──────────────────────────────────────
   robotWss.on('connection', (ws, req) => {
     const ip = req.socket.remoteAddress;
     console.log(`[WS/robot] ESP32 connected from ${ip}`);
@@ -73,7 +92,6 @@ function init(server) {
   });
 
   // ── /ws/dashboard — Browser ────────────────────────────────
-  dashboardWss = new WebSocket.Server({ server, path: '/ws/dashboard' });
 
   dashboardWss.on('connection', (ws, req) => {
     const ip = req.socket.remoteAddress;

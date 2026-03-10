@@ -85,6 +85,16 @@ app.get('/ws/robot', (req, res) => {
     });
 });
 
+app.get('/ws/dashboard', (req, res) => {
+    const connected = wsManager.isRobotConnected();
+    res.json({
+        info: 'Đây là WebSocket endpoint dành cho Dashboard — không thể truy cập bằng HTTP.',
+        usage: 'Kết nối bằng: ws://localhost:5000/ws/dashboard',
+        robotConnected: connected,
+        status: wsManager.getRobotStatus(),
+    });
+});
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({

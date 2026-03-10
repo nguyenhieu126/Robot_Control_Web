@@ -16,7 +16,8 @@ pool.on('error', (err) => {
 // Test connection
 pool.query('SELECT NOW()', (err, result) => {
     if (err) {
-        console.error('Database connection error:', err);
+        console.error('❌ Database connection error:', err);
+        // Don't exit - let the server continue running
     } else {
         console.log('✅ Database connected at:', result.rows[0].now);
     }
