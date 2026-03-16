@@ -4,13 +4,13 @@ const pool = require('../config/db');
 class UserModel {
     // Lấy tất cả users
     static async getAllUsers() {
-        const result = await pool.query('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC');
+        const result = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM users ORDER BY created_at DESC');
         return result.rows;
     }
 
     // Lấy user theo ID
     static async getUserById(id) {
-        const result = await pool.query('SELECT id, username, role, created_at FROM users WHERE id = $1', [id]);
+        const result = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM users WHERE id = $1', [id]);
         return result.rows[0];
     }
 
@@ -20,18 +20,33 @@ class UserModel {
         return result.rows[0];
     }
 
-    // Tạo user mới
-    static async createUser(username, passwordHash, role = 'operator') {
+    // Lấy user theo email
+    static async getUserByEmail(email) {
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        return result.rows[0];
+    }
+
+    // Lấy user theo email hoặc username
+    static async getUserByEmailOrUsername(identifier) {
         const result = await pool.query(
-            'INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id, username, role, created_at',
-            [username, passwordHash, role]
+            'SELECT * FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1) LIMIT 1',
+            [identifier]
+        );
+        return result.rows[0];
+    }
+
+    // Tạo user mới
+    static async createUser(username, passwordHash, role = 'user', email = null) {
+        const result = await pool.query(
+            'INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at, updated_at',
+            [username, email, passwordHash, role]
         );
         return result.rows[0];
     }
 
     // Update user
     static async updateUser(id, updates) {
-        const allowedFields = ['role'];
+        const allowedFields = ['role', 'email'];
         const updates_arr = [];
         const values = [id];
         let paramCount = 2;
@@ -46,7 +61,9 @@ class UserModel {
 
         if (updates_arr.length === 0) return null;
 
-        const query = `UPDATE users SET ${updates_arr.join(', ')} WHERE id = $1 RETURNING id, username, role, created_at`;
+        updates_arr.push('updated_at = CURRENT_TIMESTAMP');
+
+        const query = `UPDATE users SET ${updates_arr.join(', ')} WHERE id = $1 RETURNING id, username, email, role, created_at, updated_at`;
         const result = await pool.query(query, values);
         return result.rows[0];
     }

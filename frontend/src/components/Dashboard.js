@@ -48,7 +48,7 @@ const MENU_ITEMS = [
   },
 ];
 
-function Dashboard({ onNavigate, darkMode = true }) {
+function Dashboard({ onNavigate, onLogout, darkMode = true }) {
   const [size, setSize] = useState("XL");
   const theme = darkMode ? "dark" : "light";
 
@@ -91,6 +91,8 @@ function Dashboard({ onNavigate, darkMode = true }) {
               <span className="status-dot" />
               Connected
             </div>
+
+            <button className="logout-btn" onClick={onLogout}>Đăng xuất</button>
           </div>
         </header>
 

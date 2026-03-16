@@ -48,3 +48,6 @@ Các bước:
         Frontend
             cd frontend
             npm start
+Đăng nhập:
+Account: admin 
+Password: Admin@123

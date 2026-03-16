@@ -8,6 +8,7 @@ const wsManager = require('./services/wsManager');
 
 // Import routes
 const userRoutes          = require('./routes/userRoutes');
+const authRoutes          = require('./routes/authRoutes');
 const detectionRoutes     = require('./routes/detectionRoutes');
 const abandonedEventRoutes = require('./routes/abandonedEventRoutes');
 const manualCommandRoutes = require('./routes/manualCommandRoutes');
@@ -22,8 +23,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logger: in console for every incoming HTTP request
+app.use((req, res, next) => {
+    const start = Date.now();
+
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(
+            `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms - ${req.ip}`
+        );
+    });
+
+    next();
+});
+
 // API Routes
 app.use('/api/users',    userRoutes);
+app.use('/api/auth',     authRoutes);
 app.use('/api/detections', detectionRoutes);
 app.use('/api/events',   abandonedEventRoutes);
 app.use('/api/commands', manualCommandRoutes);
@@ -64,6 +80,7 @@ app.get('/api', (req, res) => {
         version: '1.0.0',
         endpoints: {
             users: '/api/users',
+            auth: '/api/auth',
             detections: '/api/detections',
             events: '/api/events',
             commands: '/api/commands',
@@ -118,10 +135,14 @@ const server = http.createServer(app);
 // Khởi tạo WebSocket server tại ws://HOST:PORT/ws/robot
 wsManager.init(server);
 
-server.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-    console.log(`🔌 WebSocket    at ws://localhost:${PORT}/ws/robot`);
-    console.log(`📊 API Overview: http://localhost:${PORT}/api`);
-    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`🗄️  Database Health: http://localhost:${PORT}/api/db-health`);
-});
+if (require.main === module) {
+    server.listen(PORT, () => {
+        console.log(`🚀 Server running at http://localhost:${PORT}`);
+        console.log(`🔌 WebSocket    at ws://localhost:${PORT}/ws/robot`);
+        console.log(`📊 API Overview: http://localhost:${PORT}/api`);
+        console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+        console.log(`🗄️  Database Health: http://localhost:${PORT}/api/db-health`);
+    });
+}
+
+module.exports = { app, server };

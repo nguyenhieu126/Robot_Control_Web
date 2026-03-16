@@ -7,23 +7,30 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "db:init": "node scripts/init-db.js",
+    "db:migrate": "node scripts/run-migrations.js",
+    "db:seed:admin": "node scripts/seed-admin.js",
     "db:init:psql": "psql -h localhost -U postgres -d postgres -f migrations/001_init_schema.sql",
     "db:reset": "psql -h localhost -U postgres -d postgres -c \"DROP DATABASE IF EXISTS robot_control;\" && npm run db:init",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "set NODE_ENV=test&& jest --runInBand"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.15.0",
     "pg": "^8.20.0",
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.1.4"
   }
 }

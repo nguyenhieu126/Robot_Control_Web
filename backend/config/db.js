@@ -7,20 +7,23 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'robot_control',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
+    ...(process.env.NODE_ENV === 'test' ? { allowExitOnIdle: true } : {}),
 });
 
 pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
 });
 
-// Test connection
-pool.query('SELECT NOW()', (err, result) => {
-    if (err) {
-        console.error('❌ Database connection error:', err);
-        // Don't exit - let the server continue running
-    } else {
-        console.log('✅ Database connected at:', result.rows[0].now);
-    }
-});
+if (process.env.NODE_ENV !== 'test') {
+    // Test connection
+    pool.query('SELECT NOW()', (err, result) => {
+        if (err) {
+            console.error('❌ Database connection error:', err);
+            // Don't exit - let the server continue running
+        } else {
+            console.log('✅ Database connected at:', result.rows[0].now);
+        }
+    });
+}
 
 module.exports = pool;
