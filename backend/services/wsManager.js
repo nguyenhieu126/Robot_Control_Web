@@ -65,7 +65,7 @@ function init(server) {
     const ip = req.socket.remoteAddress;
     console.log(`[WS/robot] ESP32 connected from ${ip}`);
 
-    if (robotClient && robotClient.readyState === WebSocket.OPEN) {
+    if (robotClient && robotClient !== ws) {
       console.log('[WS/robot] Đóng kết nối ESP32 cũ');
       robotClient.close();
     }
@@ -106,16 +106,39 @@ function init(server) {
       data: { ...robotStatus, robotConnected: isRobotConnected() },
     });
 
+    let lastCommandTime = 0;
+    const COMMAND_INTERVAL = 100;
+
     ws.on('message', (raw) => {
       try {
         const msg = JSON.parse(raw.toString());
 
-        // DIRECT_COMMAND: forward thẳng tới ESP32 — realtime joystick, không lưu DB
         if (msg.type === 'DIRECT_COMMAND') {
+          const now = Date.now();
+
+          if (now - lastCommandTime < COMMAND_INTERVAL) {
+            // console.log('[WS/dashboard] Command too frequent, skipping');
+            return;
+          }
+          lastCommandTime = now;
+
+          // Hỗ trợ nhiều shape để tránh lỗi từ client cũ.
+          const direct = msg.data ?? msg;
+          const command = direct?.command;
+          const parameters = (direct?.parameters ?? null);
+
+          if (!command) {
+            _send(ws, {
+              type: 'DIRECT_COMMAND_ACK',
+              data: { success: false, error: 'Thiếu command trong DIRECT_COMMAND' },
+            });
+            return;
+          }
+
           if (isRobotConnected()) {
             _send(robotClient, {
               type: 'COMMAND',
-              data: { id: -1, ...msg.data },  // id=-1 → ESP32 bỏ qua markExecuted
+              data: { id: -1, command, parameters }, // id=-1 => realtime command, không markExecuted
             });
           } else {
             _send(ws, {
