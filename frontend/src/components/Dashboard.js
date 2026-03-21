@@ -41,6 +41,13 @@ const MENU_ITEMS = [
     desc: "Sensor alignment",
   },
   {
+    id: "camera",
+    cls: "card-camera",
+    icon: "📷",
+    label: "Camera",
+    desc: "Realtime onboard video",
+  },
+  {
     id: "settings",
     cls: "card-settings",
     icon: "⚙",
@@ -83,6 +90,7 @@ function Dashboard({ onNavigate, onLogout, darkMode = true }) {
     if (id === "manual"   && onNavigate) onNavigate("manual");
     if (id === "auto"     && onNavigate) onNavigate("manual");  // auto card cũng vào manual để toggle
     if (id === "connect"  && onNavigate) onNavigate("connect");
+    if (id === "camera"   && onNavigate) onNavigate("camera");
   };
 
   return (

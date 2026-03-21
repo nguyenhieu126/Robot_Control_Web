@@ -50,6 +50,7 @@ import Dashboard from "./components/Dashboard";
 import Settings from "./components/Settings";
 import ManualControl from "./components/ManualControl";
 import Connect from "./components/Connect";
+import CameraView from "./components/CameraView";
 import AuthPage from "./components/AuthPage";
 import { useRobotApi } from "./hooks/useRobotApi";
 
@@ -189,6 +190,13 @@ function App() {
 
       {!showSplash && authUser && page === "connect" && (
         <Connect
+          darkMode={darkMode}
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
+      {!showSplash && authUser && page === "camera" && (
+        <CameraView
           darkMode={darkMode}
           onBack={() => setPage("dashboard")}
         />

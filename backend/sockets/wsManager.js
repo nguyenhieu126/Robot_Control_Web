@@ -1,5 +1,5 @@
 /**
- * services/wsManager.js
+ * sockets/wsManager.js
  * Quản lý 2 WebSocket path:
  *   /ws/robot     — ESP32 kết nối (bidirectional, realtime control)
  *   /ws/dashboard — Browser kết nối (nhận status, gửi DIRECT_COMMAND)

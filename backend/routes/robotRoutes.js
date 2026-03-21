@@ -4,7 +4,7 @@
  */
 const express    = require('express');
 const router     = express.Router();
-const wsManager  = require('../services/wsManager');
+const wsManager  = require('../sockets/wsManager');
 const RobotStateModel = require('../models/robotStateModel');
 
 // GET /api/robot/status — Trạng thái robot hiện tại (cache từ WS heartbeat)
