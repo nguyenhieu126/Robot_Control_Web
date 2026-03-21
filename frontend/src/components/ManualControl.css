@@ -328,11 +328,106 @@
   gap: 16px;
   margin: 16px 24px 0;
 }
+.mc-sliders-quick {
+  grid-template-columns: 1fr;
+}
 @media (max-width: 580px) {
   .mc-sliders-grid { grid-template-columns: 1fr; }
 }
 
 .mc-slider-card { margin: 0 !important; }
+
+/* ══════════════════════════════════════════════════════
+   Advanced / Tuning
+══════════════════════════════════════════════════════ */
+.mc-tuning-card {
+  padding: 12px 14px;
+}
+
+.mc-tuning-toggle {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: rgba(167,139,250,0.06);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  text-align: left;
+  transition: all 0.2s;
+}
+.mc-tuning-toggle:hover {
+  border-color: rgba(167,139,250,0.38);
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.12);
+}
+
+.mc-tuning-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--accent-purple);
+}
+
+.mc-tuning-desc {
+  grid-column: 1;
+  font-size: 0.73rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.mc-tuning-caret {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--accent-purple);
+  font-size: 0.8rem;
+}
+
+.mc-tuning-content {
+  margin-top: 12px;
+}
+
+.mc-tuning-note {
+  margin: 0 0 10px;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.mc-tuning-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.mc-action-inline {
+  border-radius: 10px;
+  border: 1px solid var(--accent-purple);
+  background: rgba(167,139,250,0.1);
+  color: var(--accent-purple);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mc-action-inline:hover:not(:disabled) {
+  background: rgba(167,139,250,0.2);
+}
+
+.mc-action-inline:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mc-action-inline.ghost {
+  border-color: var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+}
 
 .mcs-header {
   display: flex;

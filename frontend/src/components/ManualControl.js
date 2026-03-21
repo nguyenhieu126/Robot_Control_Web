@@ -10,7 +10,7 @@ const STATE_NAMES = [
 ];
 
 // ── Slider with fill track ───────────────────────────────────────
-function RangeSlider({ label, sub, min, max, step, value, unit, onChange, color = 'cyan' }) {
+function RangeSlider({ label, sub, min, max, step, value, unit, onChange, onCommit }) {
   const pct = ((value - min) / (max - min) * 100).toFixed(1);
 
   // Centered fill for steering (-45 to 45)
@@ -48,6 +48,9 @@ function RangeSlider({ label, sub, min, max, step, value, unit, onChange, color 
           className={`mc-range ${isCentered ? 'mc-range-center' : ''}`}
           style={fillStyle}
           onChange={(e) => onChange(+e.target.value)}
+          onMouseUp={onCommit}
+          onTouchEnd={onCommit}
+          onPointerUp={onCommit}
         />
         <button className="mcs-btn" onClick={() => onChange(Math.min(max, value + step * 2))}>+</button>
       </div>
@@ -70,6 +73,7 @@ function ManualControl({ onBack, darkMode = true }) {
   const [steer,    setSteer]    = useState(0);
   const [joyXY,    setJoyXY]    = useState({ x: 0, y: 0 });
   const [toggling, setToggling] = useState(false);
+  const [showTuning, setShowTuning] = useState(false);
 
   const joystickActive = useRef(false);
   const joystickVal    = useRef({ x: 0, y: 0 });
@@ -151,6 +155,13 @@ function ManualControl({ onBack, darkMode = true }) {
     }
   }, [isManual, steer, sendDirect]);
 
+  const handleSteerCenter = useCallback(() => {
+    setSteer(0);
+    if (isManual) {
+      sendDirect('TURN', { direction: 'RIGHT', angle: 0 });
+    }
+  }, [isManual, sendDirect]);
+
   const theme = darkMode ? 'mc-dark' : 'mc-light';
 
   return (
@@ -231,21 +242,52 @@ function ManualControl({ onBack, darkMode = true }) {
         </div>
       </div>
 
-      {/* ── SLIDERS ROW ── */}
-      <div className="mc-sliders-grid">
+      {/* ── QUICK CONTROL ── */}
+      <div className="mc-sliders-grid mc-sliders-quick">
         <RangeSlider
           label="Speed" sub="Range: 0 – 255"
           min={0} max={255} step={5}
           value={speed} unit="units"
           onChange={handleSpeedChange}
         />
-        <RangeSlider
-          label="Steering" sub="Range: -45° – 45°"
-          min={-45} max={45} step={1}
-          value={steer} unit="degrees"
-          onChange={setSteer}
-          onMouseUp={handleSteerApply}
-        />
+      </div>
+
+      {/* ── ADVANCED / TUNING ── */}
+      <div className="mc-card mc-tuning-card">
+        <button
+          className={`mc-tuning-toggle ${showTuning ? 'open' : ''}`}
+          onClick={() => setShowTuning(v => !v)}
+          type="button"
+        >
+          <span className="mc-tuning-title">Advanced / Tuning</span>
+          <span className="mc-tuning-desc">Servo test, căn lái, debug joystick</span>
+          <span className="mc-tuning-caret">{showTuning ? '▲' : '▼'}</span>
+        </button>
+
+        {showTuning && (
+          <div className="mc-tuning-content">
+            <p className="mc-tuning-note">
+              Dùng khi bảo trì: test servo, hiệu chỉnh cơ khí lệch lái, hoặc debug khi joystick có vấn đề.
+            </p>
+
+            <RangeSlider
+              label="Steering" sub="Range: -45° – 45°"
+              min={-45} max={45} step={1}
+              value={steer} unit="degrees"
+              onChange={setSteer}
+              onCommit={handleSteerApply}
+            />
+
+            <div className="mc-tuning-actions">
+              <button className="mc-action-inline" onClick={handleSteerApply} disabled={!isManual}>
+                Apply Steering
+              </button>
+              <button className="mc-action-inline ghost" onClick={handleSteerCenter}>
+                Center Steering
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── ACTION BUTTONS ── */}
