@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRobotWS } from "../hooks/useRobotWS";
 import "./Dashboard.css";
 
 const SIZES = ["SM", "MD", "LG", "XL"];
@@ -18,20 +19,20 @@ const MENU_ITEMS = [
     label: "Manual Control",
     desc: "Direct input override",
   },
-  {
-    id: "sliders",
-    cls: "card-sliders",
-    icon: "🎚",
-    label: "Sliders",
-    desc: "Fine-tune parameters",
-  },
-  {
-    id: "auto",
-    cls: "card-auto",
-    icon: "⚡",
-    label: "Auto Mode",
-    desc: "Autonomous operation",
-  },
+  // {
+  //   id: "sliders",
+  //   cls: "card-sliders",
+  //   icon: "🎚",
+  //   label: "Sliders",
+  //   desc: "Fine-tune parameters",
+  // },
+  // {
+  //   id: "auto",
+  //   cls: "card-auto",
+  //   icon: "⚡",
+  //   label: "Auto Mode",
+  //   desc: "Autonomous operation",
+  // },
   {
     id: "calibration",
     cls: "card-calibration",
@@ -48,12 +49,40 @@ const MENU_ITEMS = [
   },
 ];
 
-function Dashboard({ onNavigate, darkMode = true }) {
+function Dashboard({ onNavigate, onLogout, darkMode = true }) {
   const [size, setSize] = useState("XL");
   const theme = darkMode ? "dark" : "light";
+  const { robotStatus, wsConnected } = useRobotWS();
+
+  const robotConnected = !!robotStatus.robotConnected;
+  const connectionText = robotConnected ? "Connected" : "Disconnected";
+  const deviceName = robotStatus.device || "KaliVega-01";
+
+  let signalLevel = 0;
+  if (robotConnected && robotStatus.rssi !== null && robotStatus.rssi !== undefined) {
+    if (robotStatus.rssi >= -50) signalLevel = 4;
+    else if (robotStatus.rssi >= -65) signalLevel = 3;
+    else if (robotStatus.rssi >= -80) signalLevel = 2;
+    else signalLevel = 1;
+  }
+
+  const signalLabel = !robotConnected || signalLevel === 0
+    ? "No signal"
+    : signalLevel >= 4
+      ? "Strong"
+      : signalLevel >= 3
+        ? "Good"
+        : signalLevel >= 2
+          ? "Weak"
+          : "Very weak";
+
+  const protocolLabel = wsConnected ? "WebSocket" : "Offline";
 
   const handleCardClick = (id) => {
     if (id === "settings" && onNavigate) onNavigate("settings");
+    if (id === "manual"   && onNavigate) onNavigate("manual");
+    if (id === "auto"     && onNavigate) onNavigate("manual");  // auto card cũng vào manual để toggle
+    if (id === "connect"  && onNavigate) onNavigate("connect");
   };
 
   return (
@@ -85,9 +114,11 @@ function Dashboard({ onNavigate, darkMode = true }) {
             </div>
 
             <div className="status-badge">
-              <span className="status-dot" />
-              Connected
+              <span className={`status-dot ${wsConnected ? 'status-dot--on' : 'status-dot--off'}`} />
+              {wsConnected ? "Connected" : "Disconnected"}
             </div>
+
+            <button className="logout-btn" onClick={onLogout}>Đăng xuất</button>
           </div>
         </header>
 
@@ -97,8 +128,8 @@ function Dashboard({ onNavigate, darkMode = true }) {
             <div className="connection-stat">
               <label>Connection Status</label>
               <span className="val">
-                <span className="status-dot" />
-                Connected
+                <span className={`status-dot ${robotConnected ? 'status-dot--on' : 'status-dot--off'}`} />
+                {connectionText}
               </span>
             </div>
 
@@ -106,7 +137,7 @@ function Dashboard({ onNavigate, darkMode = true }) {
 
             <div className="connection-stat">
               <label>Device</label>
-              <span className="val neutral">KaliVega-01</span>
+              <span className="val neutral">{deviceName}</span>
             </div>
 
             <div className="divider-v" />
@@ -115,12 +146,11 @@ function Dashboard({ onNavigate, darkMode = true }) {
               <label>Signal</label>
               <span className="val">
                 <div className="signal-bars">
-                  <span className="active" />
-                  <span className="active" />
-                  <span className="active" />
-                  <span className="active" />
+                  {[1, 2, 3, 4].map((bar) => (
+                    <span key={bar} className={bar <= signalLevel ? "active" : ""} />
+                  ))}
                 </div>
-                Strong
+                {signalLabel}
               </span>
             </div>
 
@@ -128,7 +158,7 @@ function Dashboard({ onNavigate, darkMode = true }) {
 
             <div className="connection-stat">
               <label>Protocol</label>
-              <span className="val neutral">BLE 5.0</span>
+              <span className="val neutral">{protocolLabel}</span>
             </div>
           </div>
 

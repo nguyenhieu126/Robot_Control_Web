@@ -49,33 +49,26 @@ async function initDatabase() {
         await dbClient.connect();
         console.log(`✅ Connected to ${dbName} database\n`);
 
-        // Đọc và chạy migration file
-        const sqlFile = path.join(__dirname, '..', 'migrations', '001_init_schema.sql');
-        console.log(`📝 Reading SQL file: ${sqlFile}`);
-        
-        if (!fs.existsSync(sqlFile)) {
-            throw new Error(`Migration file not found: ${sqlFile}`);
-        }
-        
-        const sql = fs.readFileSync(sqlFile, 'utf8');
-        console.log(`✅ SQL file loaded (${sql.length} characters)\n`);
+        const migrationsDir = path.join(__dirname, '..', 'migrations');
+        const migrationFiles = fs.readdirSync(migrationsDir)
+            .filter(file => file.endsWith('.sql'))
+            .sort();
 
-        console.log('📝 Running migration script...');
-        try {
-            // Remove comments from SQL
-            const cleanSql = sql
-                .split('\n')
-                .filter(line => !line.trim().startsWith('--'))
-                .join('\n');
-            
-            // Execute all statements at once
-            await dbClient.query(cleanSql);
-            console.log('✅ Migration completed successfully\n');
-        } catch (sqlError) {
-            console.error('❌ Migration error:', sqlError.message);
-            console.error('Details:', sqlError);
-            throw sqlError;
+        if (migrationFiles.length === 0) {
+            throw new Error('No migration files found');
         }
+
+        console.log(`📝 Running ${migrationFiles.length} migration file(s)...\n`);
+
+        for (const file of migrationFiles) {
+            const sqlFile = path.join(migrationsDir, file);
+            console.log(`➡️  ${file}`);
+
+            const sql = fs.readFileSync(sqlFile, 'utf8');
+            await dbClient.query(sql);
+        }
+
+        console.log('✅ Migration completed successfully\n');
 
         // Kiểm tra số lượng bảng
         const result = await dbClient.query(`
