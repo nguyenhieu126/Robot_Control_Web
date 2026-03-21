@@ -80,7 +80,7 @@ export default function Connect({ onBack, darkMode = true }) {
       ws.onopen = () => {
         if (!mountedRef.current) return;
         setWsState("connected");
-        addLog("✅ WebSocket connected to server.", "success");
+        addLog("WebSocket connected to server.", "success");
       };
 
       ws.onclose = () => {
@@ -92,7 +92,7 @@ export default function Connect({ onBack, darkMode = true }) {
       };
 
       ws.onerror = () => {
-        addLog("❌ WebSocket error.", "error");
+        addLog("WebSocket error.", "error");
         ws.close();
       };
 
@@ -104,19 +104,19 @@ export default function Connect({ onBack, darkMode = true }) {
             case "STATUS":
               setRobotStatus(msg.data);
               setRobotConnected(msg.data?.robotConnected ?? false);
-              addLog(`📊 Status update: mode=${msg.data?.mode}, state=${msg.data?.state}`, "info");
+              addLog(`Status update: mode=${msg.data?.mode}, state=${msg.data?.state}`, "info");
               break;
             case "ROBOT_CONNECTED":
               setRobotConnected(msg.data?.connected ?? false);
               addLog(
                 msg.data?.connected
-                  ? "🤖 ESP32 connected to server!"
-                  : "🔌 ESP32 disconnected from server.",
+                  ? "ESP32 connected to server!"
+                  : "ESP32 disconnected from server.",
                 msg.data?.connected ? "success" : "warn"
               );
               break;
             case "WELCOME":
-              addLog(`🖐 Server: ${msg.data?.message}`, "success");
+              addLog(`Server: ${msg.data?.message}`, "success");
               break;
             default:
               break;
@@ -125,7 +125,7 @@ export default function Connect({ onBack, darkMode = true }) {
       };
     } catch (err) {
       setWsState("error");
-      addLog(`❌ Failed to connect: ${err.message}`, "error");
+      addLog(`Failed to connect: ${err.message}`, "error");
       reconnectRef.current = setTimeout(connect, 3000);
     }
   }, [serverUrl, addLog]);
@@ -262,7 +262,7 @@ export default function Connect({ onBack, darkMode = true }) {
             <div className="cn-card">
               <div className="cn-card-title">ESP32 Device</div>
               <div className={`cn-device-status ${robotConnected ? "cn-device-status--on" : "cn-device-status--off"}`}>
-                <span className="cn-device-icon">🤖</span>
+                <span className="cn-device-icon"></span>
                 <div className="cn-device-info">
                   <span className="cn-device-name">KaliVega-ESP32</span>
                   <span className="cn-device-state">
@@ -297,10 +297,6 @@ export default function Connect({ onBack, darkMode = true }) {
                         ? new Date(robotStatus.lastSeen).toLocaleTimeString("vi-VN", { hour12: false })
                         : "—"}
                     </span>
-                  </div>
-                  <div className="cn-stat">
-                    <label>Front</label>
-                    <span>{robotStatus.front != null ? `${robotStatus.front} cm` : "—"}</span>
                   </div>
                 </div>
               )}

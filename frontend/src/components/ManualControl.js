@@ -270,28 +270,6 @@ function ManualControl({ onBack, darkMode = true }) {
         </button>
       </div>
 
-      {/* ── SENSOR ROW ── */}
-      {robotStatus.front !== null && (
-        <div className="mc-sensors">
-          <div className="mc-sensor-item">
-            <span className="mc-sensor-label">↑ Front</span>
-            <span className="mc-sensor-val">{robotStatus.front} cm</span>
-          </div>
-          <div className="mc-sensor-item">
-            <span className="mc-sensor-label">← Left</span>
-            <span className="mc-sensor-val">{robotStatus.left} cm</span>
-          </div>
-          <div className="mc-sensor-item">
-            <span className="mc-sensor-label">Right →</span>
-            <span className="mc-sensor-val">{robotStatus.right} cm</span>
-          </div>
-          <div className="mc-sensor-item">
-            <span className="mc-sensor-label">↓ Back</span>
-            <span className="mc-sensor-val">{robotStatus.back} cm</span>
-          </div>
-        </div>
-      )}
-
       {/* ── STATUS BAR ── */}
       <div className="mc-statusbar">
         <div className={`mc-stat-chip ${isManual ? 'chip-manual' : 'chip-auto'}`}>

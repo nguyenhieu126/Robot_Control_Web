@@ -21,6 +21,8 @@ const dashboardClients = new Set();
 
 let robotStatus = {
   connected: false,
+  device:    null,
+  firmware:  null,
   mode:      'UNKNOWN',
   state:     -1,
   rssi:      null,
@@ -115,6 +117,11 @@ function init(server) {
               type: 'COMMAND',
               data: { id: -1, ...msg.data },  // id=-1 → ESP32 bỏ qua markExecuted
             });
+          } else {
+            _send(ws, {
+              type: 'DIRECT_COMMAND_ACK',
+              data: { success: false, error: 'Robot chưa kết nối' },
+            });
           }
           return;
         }
@@ -146,7 +153,12 @@ function _handleRobotMsg(ws, msg) {
   switch (type) {
     case 'REGISTER':
       console.log('[WS/robot] ESP32 registered:', data);
-      robotStatus.lastSeen = new Date().toISOString();
+      robotStatus = {
+        ...robotStatus,
+        device: data?.device ?? robotStatus.device,
+        firmware: data?.firmware ?? robotStatus.firmware,
+        lastSeen: new Date().toISOString(),
+      };
       break;
 
     case 'STATUS':
