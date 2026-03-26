@@ -49,6 +49,20 @@ function _createUpstreamUrl(pathname) {
     return { ok: true, url };
 }
 
+function _createStreamUpstreamUrl() {
+    const parsed = _safeParseCameraBaseUrl();
+    if (!parsed.ok) {
+        return parsed;
+    }
+
+    const url = new URL(parsed.url.toString());
+    if (!url.pathname || url.pathname === '/') {
+        url.pathname = '/stream.mjpg';
+    }
+
+    return { ok: true, url };
+}
+
 function _pickHttpClient(url) {
     return url.protocol === 'https:' ? https : http;
 }
@@ -130,7 +144,7 @@ async function getHealth(req, res) {
 }
 
 function getStream(req, res) {
-    const target = _createUpstreamUrl('/stream.mjpg');
+    const target = _createStreamUpstreamUrl();
     if (!target.ok) {
         return res.status(500).json({
             success: false,

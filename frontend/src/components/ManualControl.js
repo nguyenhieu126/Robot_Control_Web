@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Joystick from './Joystick';
 import { useRobotWS }  from '../hooks/useRobotWS';
 import { useRobotApi } from '../hooks/useRobotApi';
 import './ManualControl.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const STREAM_ENDPOINT = `${API_BASE}/api/camera/stream`;
 
 const STATE_NAMES = [
   'INIT','NORMAL','SLOW','AVOID_L','AVOID_R',
@@ -74,11 +77,16 @@ function ManualControl({ onBack, darkMode = true }) {
   const [joyXY,    setJoyXY]    = useState({ x: 0, y: 0 });
   const [toggling, setToggling] = useState(false);
   const [showTuning, setShowTuning] = useState(false);
+  const [streamStatus, setStreamStatus] = useState('loading');
+  const [streamKey, setStreamKey] = useState(0);
+  const [streamError, setStreamError] = useState('');
 
   const joystickActive = useRef(false);
   const joystickVal    = useRef({ x: 0, y: 0 });
   const speedRef       = useRef(speed);
   const intervalRef    = useRef(null);
+  const retryTimeoutRef = useRef(null);
+  const retryCountRef = useRef(0);
 
   useEffect(() => { speedRef.current = speed; }, [speed]);
 
@@ -101,6 +109,38 @@ function ManualControl({ onBack, darkMode = true }) {
 
     return () => clearInterval(intervalRef.current);
   }, [isManual, sendDirect]);
+
+  const scheduleStreamRetry = useCallback(() => {
+    clearTimeout(retryTimeoutRef.current);
+    const attempt = retryCountRef.current + 1;
+    retryCountRef.current = attempt;
+    const backoff = Math.min(10000, 1500 * attempt);
+
+    retryTimeoutRef.current = setTimeout(() => {
+      setStreamStatus('loading');
+      setStreamKey((prev) => prev + 1);
+    }, backoff);
+  }, []);
+
+  const handleStreamLoad = useCallback(() => {
+    retryCountRef.current = 0;
+    setStreamStatus('live');
+    setStreamError('');
+  }, []);
+
+  const handleStreamError = useCallback(() => {
+    setStreamStatus('offline');
+    setStreamError('Camera stream interrupted. Retrying...');
+    scheduleStreamRetry();
+  }, [scheduleStreamRetry]);
+
+  const handleStreamRetry = useCallback(() => {
+    retryCountRef.current = 0;
+    clearTimeout(retryTimeoutRef.current);
+    setStreamStatus('loading');
+    setStreamError('');
+    setStreamKey((prev) => prev + 1);
+  }, []);
 
   const handleJoyChange = useCallback((nx, ny) => {
     joystickActive.current = true;
@@ -129,7 +169,7 @@ function ManualControl({ onBack, darkMode = true }) {
     if (toggling) {
       setToggling(false);
     }
-  }, [robotStatus.mode]);
+  }, [toggling, robotStatus.mode]);
 
   const handleStop = useCallback(() => {
     sendDirect('STOP', null);
@@ -163,6 +203,13 @@ function ManualControl({ onBack, darkMode = true }) {
   }, [isManual, sendDirect]);
 
   const theme = darkMode ? 'mc-dark' : 'mc-light';
+  const streamUrl = useMemo(() => `${STREAM_ENDPOINT}?v=${streamKey}`, [streamKey]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(retryTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className={`mc-page ${theme}`}>
@@ -204,6 +251,45 @@ function ManualControl({ onBack, darkMode = true }) {
           <span>ESP32 chưa kết nối — lệnh được lưu hàng đợi, gửi khi robot online</span>
         </div>
       )}
+
+      {/* ── LIVE CAMERA CARD ── */}
+      <div className="mc-card mc-live-camera-card">
+        <div className="mc-card-head">
+          <div>
+            <h2>Live Camera</h2>
+            <span className="mc-sub">Onboard stream integrated with Manual Control</span>
+          </div>
+          <div className="mc-live-head-right">
+            <span className={`mc-live-badge ${streamStatus === 'live' ? 'is-live' : 'is-offline'}`}>
+              {streamStatus === 'live' ? 'LIVE' : 'OFFLINE'}
+            </span>
+            <button className="mc-live-retry" onClick={handleStreamRetry}>Reload</button>
+          </div>
+        </div>
+
+        <div className="mc-live-stream-wrap">
+          {streamStatus === 'loading' && (
+            <div className="mc-live-overlay">
+              <span>Loading stream...</span>
+            </div>
+          )}
+
+          {streamStatus === 'offline' && (
+            <div className="mc-live-overlay mc-live-overlay-error">
+              <span>Camera offline</span>
+              <small>{streamError || 'Unable to load stream'}</small>
+            </div>
+          )}
+
+          <img
+            src={streamUrl}
+            alt="Robot camera stream"
+            className={`mc-live-stream ${streamStatus === 'live' ? 'mc-live-stream-visible' : ''}`}
+            onLoad={handleStreamLoad}
+            onError={handleStreamError}
+          />
+        </div>
+      </div>
 
       {/* ── JOYSTICK CARD ── */}
       <div className="mc-card mc-joy-card">

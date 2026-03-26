@@ -17,36 +17,29 @@ const MENU_ITEMS = [
     cls: "card-manual",
     icon: "✋",
     label: "Manual Control",
-    desc: "Direct input override",
+    desc: "Drive control + live camera",
   },
   // {
   //   id: "sliders",
   //   cls: "card-sliders",
   //   icon: "🎚",
   //   label: "Sliders",
-  //   desc: "Fine-tune parameters",
-  // },
+  // //   desc: "Fine-tune parameters",
+  // // },
+  // // {
+  // //   id: "auto",
+  // //   cls: "card-auto",
+  // //   icon: "⚡",
+  // //   label: "Auto Mode",
+  // //   desc: "Autonomous operation",
+  // // },
   // {
-  //   id: "auto",
-  //   cls: "card-auto",
-  //   icon: "⚡",
-  //   label: "Auto Mode",
-  //   desc: "Autonomous operation",
+  //   id: "calibration",
+  //   cls: "card-calibration",
+  //   icon: "🎯",
+  //   label: "Calibration",
+  //   desc: "Sensor alignment",
   // },
-  {
-    id: "calibration",
-    cls: "card-calibration",
-    icon: "🎯",
-    label: "Calibration",
-    desc: "Sensor alignment",
-  },
-  {
-    id: "camera",
-    cls: "card-camera",
-    icon: "📷",
-    label: "Camera",
-    desc: "Realtime onboard video",
-  },
   {
     id: "map",
     cls: "card-connect",
@@ -97,7 +90,7 @@ function Dashboard({ onNavigate, onLogout, darkMode = true }) {
     if (id === "manual"   && onNavigate) onNavigate("manual");
     if (id === "auto"     && onNavigate) onNavigate("manual");  // auto card cũng vào manual để toggle
     if (id === "connect"  && onNavigate) onNavigate("connect");
-    if (id === "camera"   && onNavigate) onNavigate("camera");
+    if (id === "camera"   && onNavigate) onNavigate("manual");
     if (id === "map"      && onNavigate) onNavigate("map");
   };
 
