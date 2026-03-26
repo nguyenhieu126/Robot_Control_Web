@@ -11,7 +11,6 @@
 
 const WebSocket = require('ws');
 const RobotGpsLogModel = require('../models/robotGpsLogModel');
-const RobotLogModel = require('../models/robotLogModel');
 
 const GPS_ROBOT_ID = process.env.GPS_ROBOT_ID || 'kali-vega-01';
 
@@ -234,20 +233,15 @@ async function _handleRobotMsg(ws, msg) {
 
       const event = `ESP_SERIAL_${level}`;
 
-      try {
-        const saved = await RobotLogModel.createLog(event, message);
-        _broadcastDashboard({ type: 'SERIAL_LOG', data: saved });
-      } catch (error) {
-        console.error('[WS/robot] Failed to persist SERIAL_LOG:', error.message);
-        _broadcastDashboard({
-          type: 'SERIAL_LOG',
-          data: {
-            event,
-            message,
-            created_at: new Date().toISOString(),
-          },
-        });
-      }
+      // Realtime-only serial monitor: không lưu DB, chỉ broadcast khi dashboard đang mở.
+      _broadcastDashboard({
+        type: 'SERIAL_LOG',
+        data: {
+          event,
+          message,
+          created_at: new Date().toISOString(),
+        },
+      });
       break;
     }
 
@@ -306,6 +300,8 @@ function _normalizeGpsData(rawGps) {
     fix,
     lat: null,
     lng: null,
+    preview_lat: null,
+    preview_lng: null,
     altitude_m: _toNumberOrNull(rawGps.altitude_m),
     speed_kmh: _toNumberOrNull(rawGps.speed_kmh),
     course_deg: _toNumberOrNull(rawGps.course_deg),
@@ -319,6 +315,15 @@ function _normalizeGpsData(rawGps) {
   if (gps.speed_kmh !== null && gps.speed_kmh < 0) {
     console.warn('[WS/robot] Invalid GPS speed_kmh < 0, reset to 0');
     gps.speed_kmh = 0;
+  }
+
+  const previewLat = _toNumberOrNull(rawGps.preview_lat);
+  const previewLng = _toNumberOrNull(rawGps.preview_lng);
+  if (previewLat !== null && previewLng !== null
+    && previewLat >= -90 && previewLat <= 90
+    && previewLng >= -180 && previewLng <= 180) {
+    gps.preview_lat = previewLat;
+    gps.preview_lng = previewLng;
   }
 
   if (!fix) return gps;

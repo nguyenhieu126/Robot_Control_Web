@@ -32,6 +32,34 @@ describe('wsManager GPS normalize', () => {
         expect(gps.lng).toBeNull();
     });
 
+    test('keep preview coordinates even when fix is false', () => {
+        const gps = normalize({
+            fix: false,
+            satellites: 5,
+            preview_lat: 10.123,
+            preview_lng: 106.456,
+        });
+
+        expect(gps).toBeTruthy();
+        expect(gps.fix).toBe(false);
+        expect(gps.lat).toBeNull();
+        expect(gps.lng).toBeNull();
+        expect(gps.preview_lat).toBe(10.123);
+        expect(gps.preview_lng).toBe(106.456);
+    });
+
+    test('drop invalid preview coordinates', () => {
+        const gps = normalize({
+            fix: false,
+            preview_lat: 123.45,
+            preview_lng: 106.78,
+        });
+
+        expect(gps).toBeTruthy();
+        expect(gps.preview_lat).toBeNull();
+        expect(gps.preview_lng).toBeNull();
+    });
+
     test('reject out-of-range coordinates', () => {
         const gps = normalize({
             fix: true,

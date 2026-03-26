@@ -2,7 +2,6 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import "./Connect.css";
 
 const WS_URL = process.env.REACT_APP_WS_DASHBOARD || "ws://localhost:5000/ws/dashboard";
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const STATE_NAMES = {
   "-1": "Unknown",
@@ -99,29 +98,6 @@ export default function Connect({ onBack, darkMode = true }) {
     };
   }, [getSerialLevel]);
 
-  const loadSerialHistory = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/logs/serial?limit=200`);
-      const data = await res.json();
-
-      if (!res.ok || !data?.success || !Array.isArray(data.data)) {
-        addLog("Cannot load serial history from server.", "warn");
-        return;
-      }
-
-      const normalized = data.data
-        .slice()
-        .reverse()
-        .map(toSerialRow)
-        .slice(-300);
-
-      setSerialLogs(normalized);
-      addLog(`Loaded ${normalized.length} serial log lines.`, "success");
-    } catch (error) {
-      addLog(`Serial history error: ${error.message}`, "error");
-    }
-  }, [addLog, toSerialRow]);
-
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
     setWsState("connecting");
@@ -135,7 +111,6 @@ export default function Connect({ onBack, darkMode = true }) {
         if (!mountedRef.current) return;
         setWsState("connected");
         addLog("WebSocket connected to server.", "success");
-        loadSerialHistory();
       };
 
       ws.onclose = () => {
@@ -195,7 +170,7 @@ export default function Connect({ onBack, darkMode = true }) {
       addLog(`Failed to connect: ${err.message}`, "error");
       reconnectRef.current = setTimeout(connect, 3000);
     }
-  }, [serverUrl, addLog, loadSerialHistory, toSerialRow]);
+  }, [serverUrl, addLog, toSerialRow]);
 
   /* Auto-connect on mount */
   useEffect(() => {

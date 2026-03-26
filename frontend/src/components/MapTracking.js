@@ -61,6 +61,11 @@ export default function MapTracking({ onBack, darkMode = true }) {
     return { lat: Number(gps.lat), lng: Number(gps.lng) };
   }, [hasFix, gps]);
 
+  const locationText = useMemo(() => {
+    if (!currentPoint) return '';
+    return `${currentPoint.lat.toFixed(6)}, ${currentPoint.lng.toFixed(6)}`;
+  }, [currentPoint]);
+
   const centerToRobot = useCallback(() => {
     if (!currentPoint) return;
     setCenterSignal((v) => v + 1);
@@ -135,9 +140,15 @@ export default function MapTracking({ onBack, darkMode = true }) {
 
       {error ? <div className="map-error">{error}</div> : null}
 
+      {!hasFix ? (
+        <div className="map-warning">
+          Chua co GPS fix. Dua xe ra ngoai troi thoang de bat ve tinh, khi co fix he thong se hien thi Location.
+        </div>
+      ) : null}
+
       <section className="map-stats">
         <div><strong>GPS Fix:</strong> {hasFix ? 'YES' : 'NO'}</div>
-        <div><strong>Lat/Lng:</strong> {hasFix ? `${gps.lat}, ${gps.lng}` : '--'}</div>
+        {hasFix ? <div><strong>Location:</strong> {locationText}</div> : null}
         <div><strong>Speed:</strong> {gps?.speed_kmh ?? '--'} km/h</div>
         <div><strong>Satellites:</strong> {gps?.satellites ?? '--'}</div>
         <div><strong>HDOP:</strong> {gps?.hdop ?? '--'}</div>

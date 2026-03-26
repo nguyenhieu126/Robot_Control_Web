@@ -88,6 +88,21 @@
   color: #fff;
 }
 
+.map-warning {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  color: #ffd28a;
+  font-size: 0.92rem;
+}
+
+.map-page--light .map-warning {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.32);
+  color: #7a3a00;
+}
+
 @media (max-width: 768px) {
   .map-page {
     padding: 10px;
