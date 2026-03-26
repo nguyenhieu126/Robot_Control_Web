@@ -237,6 +237,7 @@ Xem thêm:
 npm start           # Run server production
 npm run dev         # Run server development (auto reload)
 npm run db:init     # Initialize database schema
+npm run db:seed:users # Seed default users (bcrypt hash in code)
 npm run db:reset    # Reset database (xóa tất cả)
 npm test            # Run tests (TODO)
 ```

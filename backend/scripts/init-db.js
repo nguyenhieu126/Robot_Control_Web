@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
+const { seedDefaultUsers } = require('./seed-admin');
 require('dotenv').config();
 
 async function initDatabase() {
@@ -69,6 +70,10 @@ async function initDatabase() {
         }
 
         console.log('✅ Migration completed successfully\n');
+
+        console.log('🔐 Seeding default users with bcrypt...');
+        await seedDefaultUsers();
+        console.log('✅ Default users seeded\n');
 
         // Kiểm tra số lượng bảng
         const result = await dbClient.query(`

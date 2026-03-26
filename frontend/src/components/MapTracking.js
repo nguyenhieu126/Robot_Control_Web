@@ -1,38 +1,43 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
+import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useRobotApi } from '../hooks/useRobotApi';
 import { useRobotWS } from '../hooks/useRobotWS';
 import './MapTracking.css';
 
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '';
+const DEFAULT_CENTER = [10.7769, 106.7009];
 
-function loadGoogleMaps(apiKey) {
-  return new Promise((resolve, reject) => {
-    if (!apiKey) {
-      reject(new Error('Missing REACT_APP_GOOGLE_MAPS_API_KEY'));
-      return;
+const robotIcon = new L.Icon({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41],
+});
+
+function MapController({ currentPoint, followRobot, centerSignal }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (followRobot && currentPoint) {
+      map.panTo([currentPoint.lat, currentPoint.lng]);
     }
+  }, [map, followRobot, currentPoint]);
 
-    if (window.google && window.google.maps) {
-      resolve(window.google);
-      return;
+  useEffect(() => {
+    if (centerSignal > 0 && currentPoint) {
+      map.panTo([currentPoint.lat, currentPoint.lng]);
     }
+  }, [map, centerSignal, currentPoint]);
 
-    const existing = document.getElementById('google-maps-sdk');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.google));
-      existing.addEventListener('error', () => reject(new Error('Failed to load Google Maps SDK')));
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = 'google-maps-sdk';
-    script.async = true;
-    script.defer = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`;
-    script.onload = () => resolve(window.google);
-    script.onerror = () => reject(new Error('Failed to load Google Maps SDK'));
-    document.head.appendChild(script);
-  });
+  return null;
 }
 
 export default function MapTracking({ onBack, darkMode = true }) {
@@ -43,12 +48,10 @@ export default function MapTracking({ onBack, darkMode = true }) {
   const [followRobot, setFollowRobot] = useState(true);
   const [historyCount, setHistoryCount] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const [centerSignal, setCenterSignal] = useState(0);
 
-  const mapRef = useRef(null);
-  const mapContainerRef = useRef(null);
-  const markerRef = useRef(null);
-  const trailRef = useRef(null);
   const localTrailRef = useRef([]);
+  const [trail, setTrail] = useState([]);
 
   const gps = robotStatus?.gps || null;
   const hasFix = Boolean(gps?.fix && Number.isFinite(gps?.lat) && Number.isFinite(gps?.lng));
@@ -58,54 +61,22 @@ export default function MapTracking({ onBack, darkMode = true }) {
     return { lat: Number(gps.lat), lng: Number(gps.lng) };
   }, [hasFix, gps]);
 
-  const drawTrail = useCallback(() => {
-    if (!window.google || !trailRef.current) return;
-    trailRef.current.setPath(localTrailRef.current);
-  }, []);
-
   const centerToRobot = useCallback(() => {
-    if (!mapRef.current || !currentPoint) return;
-    mapRef.current.panTo(currentPoint);
+    if (!currentPoint) return;
+    setCenterSignal((v) => v + 1);
   }, [currentPoint]);
 
   const clearTrail = useCallback(() => {
     localTrailRef.current = currentPoint ? [currentPoint] : [];
-    drawTrail();
+    setTrail([...localTrailRef.current]);
     setHistoryCount(localTrailRef.current.length);
-  }, [currentPoint, drawTrail]);
+  }, [currentPoint]);
 
   useEffect(() => {
     let mounted = true;
 
     const init = async () => {
       try {
-        await loadGoogleMaps(GOOGLE_MAPS_API_KEY);
-        if (!mounted) return;
-
-        const initialCenter = currentPoint || { lat: 10.7769, lng: 106.7009 };
-        mapRef.current = new window.google.maps.Map(mapContainerRef.current, {
-          center: initialCenter,
-          zoom: currentPoint ? 17 : 14,
-          mapTypeControl: true,
-          streetViewControl: false,
-          fullscreenControl: true,
-        });
-
-        markerRef.current = new window.google.maps.Marker({
-          map: mapRef.current,
-          position: initialCenter,
-          title: 'Robot position',
-        });
-
-        trailRef.current = new window.google.maps.Polyline({
-          map: mapRef.current,
-          path: [],
-          geodesic: true,
-          strokeColor: '#0077cc',
-          strokeOpacity: 0.9,
-          strokeWeight: 4,
-        });
-
         const historyRes = await getGpsHistory({ limit: 300 });
         if (!mounted || !historyRes?.success) return;
 
@@ -114,12 +85,7 @@ export default function MapTracking({ onBack, darkMode = true }) {
           .filter((row) => Number.isFinite(Number(row.lat)) && Number.isFinite(Number(row.lng)))
           .map((row) => ({ lat: Number(row.lat), lng: Number(row.lng) }));
 
-        if (localTrailRef.current.length > 0) {
-          markerRef.current.setPosition(localTrailRef.current[localTrailRef.current.length - 1]);
-          mapRef.current.panTo(localTrailRef.current[localTrailRef.current.length - 1]);
-        }
-
-        drawTrail();
+        setTrail([...localTrailRef.current]);
         setHistoryCount(localTrailRef.current.length);
       } catch (e) {
         if (!mounted) return;
@@ -132,42 +98,28 @@ export default function MapTracking({ onBack, darkMode = true }) {
     return () => {
       mounted = false;
     };
-  }, [currentPoint, drawTrail, getGpsHistory]);
+  }, [getGpsHistory]);
 
   useEffect(() => {
-    if (!currentPoint || !markerRef.current) return;
-
-    markerRef.current.setPosition(currentPoint);
+    if (!currentPoint) return;
 
     const trail = localTrailRef.current;
     const last = trail.length > 0 ? trail[trail.length - 1] : null;
     if (!last || last.lat !== currentPoint.lat || last.lng !== currentPoint.lng) {
       trail.push(currentPoint);
       if (trail.length > 1000) trail.shift();
-      drawTrail();
+      setTrail([...trail]);
       setHistoryCount(trail.length);
     }
 
-    if (followRobot && mapRef.current) {
-      mapRef.current.panTo(currentPoint);
-    }
-
     setLastUpdatedAt(new Date().toISOString());
-  }, [currentPoint, followRobot, drawTrail]);
+  }, [currentPoint]);
 
-  if (!GOOGLE_MAPS_API_KEY) {
-    return (
-      <div className={`map-page ${darkMode ? 'map-page--dark' : 'map-page--light'}`}>
-        <header className="map-header">
-          <button className="map-btn" onClick={onBack}>Back</button>
-          <h1>Map Tracking</h1>
-        </header>
-        <div className="map-error">
-          Missing REACT_APP_GOOGLE_MAPS_API_KEY. Add it to frontend .env before running the app.
-        </div>
-      </div>
-    );
-  }
+  const initialCenter = currentPoint ? [currentPoint.lat, currentPoint.lng] : DEFAULT_CENTER;
+  const markerPosition = currentPoint
+    ? [currentPoint.lat, currentPoint.lng]
+    : (trail.length > 0 ? [trail[trail.length - 1].lat, trail[trail.length - 1].lng] : DEFAULT_CENTER);
+  const polylinePoints = trail.map((p) => [p.lat, p.lng]);
 
   return (
     <div className={`map-page ${darkMode ? 'map-page--dark' : 'map-page--light'}`}>
@@ -193,7 +145,17 @@ export default function MapTracking({ onBack, darkMode = true }) {
         <div><strong>Last update:</strong> {lastUpdatedAt || '--'}</div>
       </section>
 
-      <div ref={mapContainerRef} className="map-canvas" />
+      <div className="map-canvas">
+        <MapContainer center={initialCenter} zoom={currentPoint ? 17 : 14} className="map-leaflet" scrollWheelZoom>
+          <TileLayer
+            attribution='&copy; OpenStreetMap contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker position={markerPosition} icon={robotIcon} />
+          {polylinePoints.length > 1 ? <Polyline positions={polylinePoints} pathOptions={{ color: '#0077cc', weight: 4 }} /> : null}
+          <MapController currentPoint={currentPoint} followRobot={followRobot} centerSignal={centerSignal} />
+        </MapContainer>
+      </div>
     </div>
   );
 }

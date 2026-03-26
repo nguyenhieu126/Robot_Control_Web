@@ -9,7 +9,8 @@
     "db:init": "node scripts/init-db.js",
     "db:migrate": "node scripts/run-migrations.js",
     "db:seed:admin": "node scripts/seed-admin.js",
-    "db:init:psql": "psql -h localhost -U postgres -d postgres -f migrations/001_init_schema.sql",
+    "db:seed:users": "node scripts/seed-admin.js",
+    "db:init:psql": "psql -h localhost -U postgres -d robot_control -f migrations/001_init_schema.sql && node scripts/seed-admin.js",
     "db:reset": "psql -h localhost -U postgres -d postgres -c \"DROP DATABASE IF EXISTS robot_control;\" && npm run db:init",
     "test": "set NODE_ENV=test&& jest --runInBand"
   },
