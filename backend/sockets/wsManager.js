@@ -11,6 +11,7 @@
 
 const WebSocket = require('ws');
 const RobotGpsLogModel = require('../models/robotGpsLogModel');
+const RobotLogModel = require('../models/robotLogModel');
 
 const GPS_ROBOT_ID = process.env.GPS_ROBOT_ID || 'kali-vega-01';
 
@@ -222,6 +223,33 @@ async function _handleRobotMsg(ws, msg) {
 
     case 'PONG':
       break;
+
+    case 'SERIAL_LOG': {
+      const level = typeof data?.level === 'string' && data.level.length > 0
+        ? data.level.toUpperCase()
+        : 'INFO';
+      const message = typeof data?.message === 'string' ? data.message : '';
+
+      if (!message) break;
+
+      const event = `ESP_SERIAL_${level}`;
+
+      try {
+        const saved = await RobotLogModel.createLog(event, message);
+        _broadcastDashboard({ type: 'SERIAL_LOG', data: saved });
+      } catch (error) {
+        console.error('[WS/robot] Failed to persist SERIAL_LOG:', error.message);
+        _broadcastDashboard({
+          type: 'SERIAL_LOG',
+          data: {
+            event,
+            message,
+            created_at: new Date().toISOString(),
+          },
+        });
+      }
+      break;
+    }
 
     default:
       console.log(`[WS/robot] Unknown type: ${type}`);

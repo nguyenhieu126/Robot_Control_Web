@@ -169,6 +169,12 @@
   flex-direction: column;
 }
 
+.cn-card--serial {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
 .cn-card-title {
   font-size: 0.72rem;
   font-weight: 700;
@@ -179,6 +185,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.cn-inline-actions {
+  display: inline-flex;
+  gap: 6px;
 }
 
 /* ── URL row ── */
@@ -397,3 +408,56 @@
 
 .cn-log-ts  { color: var(--cn-text-dim); flex-shrink: 0; }
 .cn-log-msg { word-break: break-word; }
+
+/* ── Serial monitor ── */
+.cn-serial {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--cn-border);
+  background: var(--cn-surface2);
+  min-height: 240px;
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+}
+
+.cn-serial-row {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--cn-border);
+}
+
+.cn-serial-row:last-child {
+  border-bottom: none;
+}
+
+.cn-serial-ts {
+  color: var(--cn-text-dim);
+  flex-shrink: 0;
+}
+
+.cn-serial-level {
+  flex-shrink: 0;
+  font-weight: 700;
+  min-width: 56px;
+}
+
+.cn-serial-msg {
+  word-break: break-word;
+}
+
+.cn-serial-row--info .cn-serial-level,
+.cn-serial-row--debug .cn-serial-level {
+  color: var(--cn-accent);
+}
+
+.cn-serial-row--warn .cn-serial-level {
+  color: var(--cn-warn);
+}
+
+.cn-serial-row--error .cn-serial-level,
+.cn-serial-row--fatal .cn-serial-level {
+  color: var(--cn-error);
+}

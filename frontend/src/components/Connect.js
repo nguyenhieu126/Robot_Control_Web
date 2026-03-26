@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import "./Connect.css";
 
 const WS_URL = process.env.REACT_APP_WS_DASHBOARD || "ws://localhost:5000/ws/dashboard";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const STATE_NAMES = {
   "-1": "Unknown",
@@ -45,11 +46,14 @@ export default function Connect({ onBack, darkMode = true }) {
   const [serverUrl, setServerUrl]       = useState(WS_URL);
   const [editingUrl, setEditingUrl]     = useState(false);
   const [urlDraft, setUrlDraft]         = useState(WS_URL);
+  const [serialLogs, setSerialLogs]     = useState([]);
+  const [serialAutoScroll, setSerialAutoScroll] = useState(true);
 
   const wsRef       = useRef(null);
   const reconnectRef = useRef(null);
   const mountedRef  = useRef(true);
   const logRef      = useRef(null);
+  const serialRef   = useRef(null);
 
   const addLog = useCallback((msg, type = "info") => {
     const ts = new Date().toLocaleTimeString("vi-VN", { hour12: false });
@@ -68,6 +72,56 @@ export default function Connect({ onBack, darkMode = true }) {
     addLog("Disconnected manually.", "warn");
   }, [addLog]);
 
+  const getSerialLevel = useCallback((entry = {}) => {
+    if (typeof entry.level === "string" && entry.level) {
+      return entry.level.toUpperCase();
+    }
+
+    if (typeof entry.event === "string" && entry.event.startsWith("ESP_SERIAL_")) {
+      return entry.event.replace("ESP_SERIAL_", "").toUpperCase();
+    }
+
+    return "INFO";
+  }, []);
+
+  const toSerialRow = useCallback((entry = {}) => {
+    const createdAt = entry.created_at || new Date().toISOString();
+    const level = getSerialLevel(entry);
+    const message = typeof entry.message === "string" && entry.message.length > 0
+      ? entry.message
+      : "(empty serial message)";
+
+    return {
+      id: entry.id || `${createdAt}-${message.slice(0, 16)}`,
+      ts: new Date(createdAt).toLocaleTimeString("vi-VN", { hour12: false }),
+      level,
+      message,
+    };
+  }, [getSerialLevel]);
+
+  const loadSerialHistory = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/logs/serial?limit=200`);
+      const data = await res.json();
+
+      if (!res.ok || !data?.success || !Array.isArray(data.data)) {
+        addLog("Cannot load serial history from server.", "warn");
+        return;
+      }
+
+      const normalized = data.data
+        .slice()
+        .reverse()
+        .map(toSerialRow)
+        .slice(-300);
+
+      setSerialLogs(normalized);
+      addLog(`Loaded ${normalized.length} serial log lines.`, "success");
+    } catch (error) {
+      addLog(`Serial history error: ${error.message}`, "error");
+    }
+  }, [addLog, toSerialRow]);
+
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
     setWsState("connecting");
@@ -81,6 +135,7 @@ export default function Connect({ onBack, darkMode = true }) {
         if (!mountedRef.current) return;
         setWsState("connected");
         addLog("WebSocket connected to server.", "success");
+        loadSerialHistory();
       };
 
       ws.onclose = () => {
@@ -118,6 +173,18 @@ export default function Connect({ onBack, darkMode = true }) {
             case "WELCOME":
               addLog(`Server: ${msg.data?.message}`, "success");
               break;
+            case "SERIAL_LOG": {
+              const row = toSerialRow(msg.data || {});
+              setSerialLogs((prev) => [...prev.slice(-299), row]);
+
+              const levelType = row.level === "ERROR"
+                ? "error"
+                : row.level === "WARN"
+                  ? "warn"
+                  : "info";
+              addLog(`SERIAL ${row.level}: ${row.message}`, levelType);
+              break;
+            }
             default:
               break;
           }
@@ -128,7 +195,7 @@ export default function Connect({ onBack, darkMode = true }) {
       addLog(`Failed to connect: ${err.message}`, "error");
       reconnectRef.current = setTimeout(connect, 3000);
     }
-  }, [serverUrl, addLog]);
+  }, [serverUrl, addLog, loadSerialHistory, toSerialRow]);
 
   /* Auto-connect on mount */
   useEffect(() => {
@@ -146,6 +213,11 @@ export default function Connect({ onBack, darkMode = true }) {
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [log]);
+
+  useEffect(() => {
+    if (!serialAutoScroll) return;
+    if (serialRef.current) serialRef.current.scrollTop = serialRef.current.scrollHeight;
+  }, [serialLogs, serialAutoScroll]);
 
   const handleManualConnect = () => {
     clearTimeout(reconnectRef.current);
@@ -318,6 +390,34 @@ export default function Connect({ onBack, darkMode = true }) {
                   <div key={i} className={`cn-log-row cn-log-row--${entry.type}`}>
                     <span className="cn-log-ts">{entry.ts}</span>
                     <span className="cn-log-msg">{entry.msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="cn-card cn-card--serial">
+              <div className="cn-card-title">
+                Serial Monitor (ESP32)
+                <div className="cn-inline-actions">
+                  <button
+                    className="cn-btn cn-btn--ghost cn-btn--sm"
+                    onClick={() => setSerialAutoScroll((v) => !v)}
+                  >
+                    {serialAutoScroll ? "Auto-scroll: ON" : "Auto-scroll: OFF"}
+                  </button>
+                  <button className="cn-btn cn-btn--ghost cn-btn--sm" onClick={() => setSerialLogs([])}>Clear</button>
+                </div>
+              </div>
+
+              <div className="cn-serial" ref={serialRef}>
+                {serialLogs.length === 0 && (
+                  <span className="cn-log-empty">No serial data yet…</span>
+                )}
+                {serialLogs.map((entry) => (
+                  <div key={entry.id} className={`cn-serial-row cn-serial-row--${entry.level.toLowerCase()}`}>
+                    <span className="cn-serial-ts">{entry.ts}</span>
+                    <span className="cn-serial-level">[{entry.level}]</span>
+                    <span className="cn-serial-msg">{entry.message}</span>
                   </div>
                 ))}
               </div>
