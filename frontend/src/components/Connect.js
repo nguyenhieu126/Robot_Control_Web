@@ -231,6 +231,15 @@ export default function Connect({ onBack, darkMode = true }) {
     // Will reconnect on next handleManualConnect or useEffect re-run
   };
 
+  const handleSerialScroll = useCallback(() => {
+    const el = serialRef.current;
+    if (!el) return;
+
+    const threshold = 24;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    setSerialAutoScroll(atBottom);
+  }, []);
+
   const wsStateLabel = {
     connecting:   "Connecting…",
     connected:    "Connected",
@@ -409,7 +418,7 @@ export default function Connect({ onBack, darkMode = true }) {
                 </div>
               </div>
 
-              <div className="cn-serial" ref={serialRef}>
+              <div className="cn-serial" ref={serialRef} onScroll={handleSerialScroll}>
                 {serialLogs.length === 0 && (
                   <span className="cn-log-empty">No serial data yet…</span>
                 )}

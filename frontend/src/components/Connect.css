@@ -171,6 +171,7 @@
 
 .cn-card--serial {
   min-height: 320px;
+  max-height: 460px;
   display: flex;
   flex-direction: column;
 }
@@ -417,10 +418,15 @@
   border-radius: 10px;
   border: 1px solid var(--cn-border);
   background: var(--cn-surface2);
-  min-height: 240px;
+  min-height: 0;
   font-family: "Courier New", monospace;
   font-size: 0.78rem;
+  overscroll-behavior: contain;
 }
+
+.cn-serial::-webkit-scrollbar { width: 6px; }
+.cn-serial::-webkit-scrollbar-track { background: transparent; }
+.cn-serial::-webkit-scrollbar-thumb { background: var(--cn-border); border-radius: 6px; }
 
 .cn-serial-row {
   display: flex;
