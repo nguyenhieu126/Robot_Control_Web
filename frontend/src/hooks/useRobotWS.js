@@ -14,6 +14,7 @@ const DEFAULT_STATUS = {
   left: null,
   right: null,
   back: null,
+  gps: null,
 };
 
 export function useRobotWS() {

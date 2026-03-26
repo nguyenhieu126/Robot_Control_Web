@@ -34,6 +34,21 @@ router.get('/event/:event', async (req, res) => {
     }
 });
 
+// GET /api/logs/serial - Lấy serial logs từ ESP (mới nhất trước)
+router.get('/serial', async (req, res) => {
+    try {
+        const limitRaw = parseInt(req.query.limit || '200', 10);
+        const offsetRaw = parseInt(req.query.offset || '0', 10);
+        const limit = Number.isNaN(limitRaw) ? 200 : Math.max(1, Math.min(limitRaw, 1000));
+        const offset = Number.isNaN(offsetRaw) ? 0 : Math.max(0, offsetRaw);
+
+        const logs = await RobotLogModel.getSerialLogs(limit, offset);
+        res.json({ success: true, data: logs, count: logs.length });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // GET /api/logs/stats - Thống kê
 router.get('/stats/all', async (req, res) => {
     try {

@@ -80,9 +80,11 @@ npm run db:init
 ```bash
 # Windows
 psql -h localhost -U postgres -d robot_control -f migrations/001_init_schema.sql
+npm run db:seed:users
 
 # macOS/Linux
 psql -h localhost -U postgres -d robot_control -f migrations/001_init_schema.sql
+npm run db:seed:users
 ```
 
 ### Phương pháp 3: Dùng psql console
@@ -91,7 +93,11 @@ psql -h localhost -U postgres -d robot_control -f migrations/001_init_schema.sql
 psql -h localhost -U postgres -d robot_control
 \i migrations/001_init_schema.sql
 \dt  # Kiểm tra bảng
+\q
+npm run db:seed:users
 ```
+
+Lưu ý: user mặc định được tạo trong code bằng bcrypt (`scripts/seed-admin.js`), không còn hard-code password hash trong file SQL migration.
 
 ---
 
@@ -154,7 +160,7 @@ Mở browser hoặc Postman:
 
 ```
 Database: robot_control
-├── users (5 người dùng mẫu)
+├── users (3 user mặc định, seed bằng bcrypt)
 ├── detections (3 detection mẫu)
 ├── abandoned_events (2 event mẫu)
 ├── manual_commands

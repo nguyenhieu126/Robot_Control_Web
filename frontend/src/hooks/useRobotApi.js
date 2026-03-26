@@ -78,5 +78,25 @@ export function useRobotApi() {
 
   const getMe = useCallback(() => _get('/api/auth/me'), [_get]);
 
-  return { sendCommand, setMode, register, login, getMe };
+  const getGpsLatest = useCallback(
+    (robotId = null) => {
+      const query = robotId ? `?robotId=${encodeURIComponent(robotId)}` : '';
+      return _get(`/api/gps/latest${query}`);
+    },
+    [_get]
+  );
+
+  const getGpsHistory = useCallback(
+    ({ limit = 200, from = null, to = null, robotId = null } = {}) => {
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (robotId) params.set('robotId', robotId);
+      return _get(`/api/gps/history?${params.toString()}`);
+    },
+    [_get]
+  );
+
+  return { sendCommand, setMode, register, login, getMe, getGpsLatest, getGpsHistory };
 }

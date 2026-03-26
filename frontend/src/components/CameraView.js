@@ -1,0 +1,221 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import "./CameraView.css";
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const HEALTH_ENDPOINT = `${API_BASE}/api/camera/health`;
+const STREAM_ENDPOINT = `${API_BASE}/api/camera/stream`;
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("auth_token");
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+function formatTime(ts) {
+  if (!ts) return "--";
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleTimeString("vi-VN", { hour12: false });
+}
+
+export default function CameraView({ onBack, darkMode = true }) {
+  const [healthStatus, setHealthStatus] = useState("loading");
+  const [streamStatus, setStreamStatus] = useState("loading");
+  const [lastCheckedAt, setLastCheckedAt] = useState(null);
+  const [lastLiveAt, setLastLiveAt] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [streamKey, setStreamKey] = useState(0);
+  const [cameraMeta, setCameraMeta] = useState(null);
+
+  const mountedRef = useRef(true);
+  const retryTimeoutRef = useRef(null);
+  const healthIntervalRef = useRef(null);
+  const retryCountRef = useRef(0);
+
+  const themeCls = darkMode ? "cv-page--dark" : "cv-page--light";
+
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await fetch(HEALTH_ENDPOINT, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+
+      const data = await res.json();
+      setLastCheckedAt(data?.lastCheckedAt || new Date().toISOString());
+
+      if (!res.ok || !data?.success) {
+        setHealthStatus("offline");
+        setErrorMessage(data?.error || "Camera health check failed");
+        setCameraMeta(null);
+        return;
+      }
+
+      setHealthStatus("online");
+      setCameraMeta(data?.data || null);
+      setErrorMessage("");
+    } catch (error) {
+      setHealthStatus("offline");
+      setLastCheckedAt(new Date().toISOString());
+      setErrorMessage(`Cannot reach camera health endpoint: ${error.message}`);
+      setCameraMeta(null);
+    }
+  }, []);
+
+  const scheduleRetry = useCallback(() => {
+    clearTimeout(retryTimeoutRef.current);
+    const attempt = retryCountRef.current + 1;
+    retryCountRef.current = attempt;
+    const backoff = Math.min(10000, 1500 * attempt);
+
+    retryTimeoutRef.current = setTimeout(() => {
+      if (!mountedRef.current) return;
+      setStreamStatus("loading");
+      setStreamKey((prev) => prev + 1);
+    }, backoff);
+  }, []);
+
+  const handleImageLoad = useCallback(() => {
+    retryCountRef.current = 0;
+    setStreamStatus("live");
+    setLastLiveAt(new Date().toISOString());
+    setErrorMessage("");
+  }, []);
+
+  const handleImageError = useCallback(() => {
+    setStreamStatus("offline");
+    setErrorMessage("Camera stream interrupted. Retrying...");
+    scheduleRetry();
+  }, [scheduleRetry]);
+
+  const handleManualRetry = useCallback(() => {
+    retryCountRef.current = 0;
+    clearTimeout(retryTimeoutRef.current);
+    setStreamStatus("loading");
+    setErrorMessage("");
+    setStreamKey((prev) => prev + 1);
+    fetchHealth();
+  }, [fetchHealth]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    fetchHealth();
+
+    healthIntervalRef.current = setInterval(fetchHealth, 7000);
+
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(retryTimeoutRef.current);
+      clearInterval(healthIntervalRef.current);
+    };
+  }, [fetchHealth]);
+
+  const streamUrl = useMemo(() => `${STREAM_ENDPOINT}?v=${streamKey}`, [streamKey]);
+
+  const liveBadge = streamStatus === "live" && healthStatus === "online";
+
+  return (
+    <div className={`cv-page ${themeCls}`}>
+      <div className="cv-bg-grid" />
+      <div className="cv-glow cv-glow--tl" />
+      <div className="cv-glow cv-glow--br" />
+
+      <header className="cv-header">
+        <button className="cv-back" onClick={onBack} title="Quay lại">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </button>
+
+        <div className="cv-title-wrap">
+          <h1>Camera View</h1>
+          <p>Realtime onboard stream from Raspberry</p>
+        </div>
+
+        <div className={`cv-badge ${liveBadge ? "cv-badge--live" : "cv-badge--offline"}`}>
+          <span className="cv-dot" />
+          {liveBadge ? "Live" : "Offline"}
+        </div>
+      </header>
+
+      <main className="cv-main">
+        <section className="cv-stream-card">
+          <div className="cv-stream-head">
+            <h2>Robot Camera</h2>
+            <button className="cv-btn" onClick={handleManualRetry}>Retry</button>
+          </div>
+
+          <div className="cv-stream-shell">
+            {streamStatus === "loading" && (
+              <div className="cv-overlay">
+                <span className="cv-spinner" />
+                <span>Loading stream...</span>
+              </div>
+            )}
+
+            {streamStatus === "offline" && (
+              <div className="cv-overlay cv-overlay--error">
+                <span>Camera offline</span>
+                <small>{errorMessage || "Unable to load stream"}</small>
+              </div>
+            )}
+
+            <img
+              src={streamUrl}
+              alt="Robot camera stream"
+              className={`cv-stream ${streamStatus === "live" ? "cv-stream--visible" : ""}`}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          </div>
+        </section>
+
+        <section className="cv-status-card">
+          <h3>Connection Status</h3>
+          <div className="cv-row">
+            <span>Source health</span>
+            <strong className={healthStatus === "online" ? "ok" : "bad"}>
+              {healthStatus === "loading" ? "Checking..." : healthStatus}
+            </strong>
+          </div>
+          <div className="cv-row">
+            <span>Stream</span>
+            <strong className={streamStatus === "live" ? "ok" : "bad"}>{streamStatus}</strong>
+          </div>
+          <div className="cv-row">
+            <span>Last health check</span>
+            <strong>{formatTime(lastCheckedAt)}</strong>
+          </div>
+          <div className="cv-row">
+            <span>Last live frame</span>
+            <strong>{formatTime(lastLiveAt)}</strong>
+          </div>
+          <div className="cv-row">
+            <span>Driver</span>
+            <strong>{cameraMeta?.driver || "--"}</strong>
+          </div>
+          <div className="cv-row">
+            <span>Sensor</span>
+            <strong>{cameraMeta?.sensor_model || "--"}</strong>
+          </div>
+          <div className="cv-row">
+            <span>Resolution</span>
+            <strong>
+              {cameraMeta?.width && cameraMeta?.height
+                ? `${cameraMeta.width}x${cameraMeta.height}`
+                : "--"}
+            </strong>
+          </div>
+          <div className="cv-row">
+            <span>Target FPS</span>
+            <strong>{cameraMeta?.fps || "--"}</strong>
+          </div>
+          {errorMessage && <p className="cv-error-text">{errorMessage}</p>}
+        </section>
+      </main>
+    </div>
+  );
+}

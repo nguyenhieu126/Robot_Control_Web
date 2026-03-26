@@ -83,11 +83,7 @@ CREATE INDEX idx_robot_logs_created_at ON robot_logs(created_at);
 -- SEED DATA (Dữ liệu mẫu)
 -- ===================================
 
--- Tạo user mẫu
-INSERT INTO users (username, password_hash, role) VALUES
-    ('admin', '$2b$10$abcdefghijklmnop', 'admin'),
-    ('operator', '$2b$10$abcdefghijklmnop', 'operator'),
-    ('security', '$2b$10$abcdefghijklmnop', 'security');
+-- User seed được tạo bằng script Node.js (bcrypt) để tránh hard-code hash trong SQL.
 
 -- Tạo detection mẫu
 INSERT INTO detections (object_type, confidence, image_path, location_x, location_y) VALUES
@@ -98,7 +94,7 @@ INSERT INTO detections (object_type, confidence, image_path, location_x, locatio
 -- Tạo abandoned event mẫu
 INSERT INTO abandoned_events (detection_id, status, confirmed_by, first_seen, last_seen, duration, snapshot_path, note) VALUES
     (1, 'pending', NULL, NOW() - INTERVAL '5 minutes', NOW(), 300, '/snapshots/event_001.jpg', NULL),
-    (2, 'confirmed', 3, NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '1 minute', 540, '/snapshots/event_002.jpg', 'Bag found near entrance');
+    (2, 'confirmed', NULL, NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '1 minute', 540, '/snapshots/event_002.jpg', 'Bag found near entrance');
 
 -- Tạo log mẫu
 INSERT INTO robot_logs (event, message) VALUES

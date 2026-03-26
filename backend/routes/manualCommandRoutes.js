@@ -2,7 +2,7 @@
 const express    = require('express');
 const router     = express.Router();
 const ManualCommandModel = require('../models/manualCommandModel');
-const wsManager  = require('../services/wsManager');
+const wsManager  = require('../sockets/wsManager');
 
 // GET /api/commands - Lấy tất cả commands
 router.get('/', async (req, res) => {

@@ -4,7 +4,7 @@ const cors    = require('cors');
 require('dotenv').config();
 
 const pool      = require('./config/db');
-const wsManager = require('./services/wsManager');
+const wsManager = require('./sockets/wsManager');
 
 // Import routes
 const userRoutes          = require('./routes/userRoutes');
@@ -14,6 +14,8 @@ const abandonedEventRoutes = require('./routes/abandonedEventRoutes');
 const manualCommandRoutes = require('./routes/manualCommandRoutes');
 const robotLogRoutes      = require('./routes/robotLogRoutes');
 const robotRoutes         = require('./routes/robotRoutes');
+const cameraRoutes        = require('./routes/cameraRoutes');
+const gpsRoutes           = require('./routes/gpsRoutes');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -45,6 +47,8 @@ app.use('/api/events',   abandonedEventRoutes);
 app.use('/api/commands', manualCommandRoutes);
 app.use('/api/logs',     robotLogRoutes);
 app.use('/api/robot',    robotRoutes);
+app.use('/api/camera',   cameraRoutes);
+app.use('/api/gps',      gpsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -85,6 +89,8 @@ app.get('/api', (req, res) => {
             events: '/api/events',
             commands: '/api/commands',
             logs: '/api/logs',
+            gps: '/api/gps',
+            camera: '/api/camera',
             health: '/api/health',
             dbHealth: '/api/db-health'
         }

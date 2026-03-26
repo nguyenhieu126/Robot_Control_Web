@@ -42,6 +42,18 @@ class RobotLogModel {
         return result.rows;
     }
 
+    // Lấy serial logs từ ESP (mới nhất trước)
+    static async getSerialLogs(limit = 200, offset = 0) {
+        const result = await pool.query(
+            `SELECT * FROM robot_logs
+             WHERE event LIKE 'ESP_SERIAL_%'
+             ORDER BY created_at DESC
+             LIMIT $1 OFFSET $2`,
+            [limit, offset]
+        );
+        return result.rows;
+    }
+
     // Tạo log mới
     static async createLog(event, message) {
         const result = await pool.query(
