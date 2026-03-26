@@ -48,6 +48,13 @@ const MENU_ITEMS = [
     desc: "Realtime onboard video",
   },
   {
+    id: "map",
+    cls: "card-connect",
+    icon: "🗺️",
+    label: "Map Tracking",
+    desc: "Realtime GPS trail",
+  },
+  {
     id: "settings",
     cls: "card-settings",
     icon: "⚙",
@@ -91,6 +98,7 @@ function Dashboard({ onNavigate, onLogout, darkMode = true }) {
     if (id === "auto"     && onNavigate) onNavigate("manual");  // auto card cũng vào manual để toggle
     if (id === "connect"  && onNavigate) onNavigate("connect");
     if (id === "camera"   && onNavigate) onNavigate("camera");
+    if (id === "map"      && onNavigate) onNavigate("map");
   };
 
   return (

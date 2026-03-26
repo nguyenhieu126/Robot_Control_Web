@@ -51,6 +51,7 @@ import Settings from "./components/Settings";
 import ManualControl from "./components/ManualControl";
 import Connect from "./components/Connect";
 import CameraView from "./components/CameraView";
+import MapTracking from "./components/MapTracking";
 import AuthPage from "./components/AuthPage";
 import { useRobotApi } from "./hooks/useRobotApi";
 
@@ -197,6 +198,13 @@ function App() {
 
       {!showSplash && authUser && page === "camera" && (
         <CameraView
+          darkMode={darkMode}
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
+      {!showSplash && authUser && page === "map" && (
+        <MapTracking
           darkMode={darkMode}
           onBack={() => setPage("dashboard")}
         />
