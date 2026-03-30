@@ -2,6 +2,22 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 const WS_URL = process.env.REACT_APP_WS_DASHBOARD || 'ws://localhost:5000/ws/dashboard';
 
+function buildDashboardWsUrl(baseUrl) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    return baseUrl;
+  }
+
+  try {
+    const parsed = new URL(baseUrl);
+    parsed.searchParams.set('token', token);
+    return parsed.toString();
+  } catch {
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}token=${encodeURIComponent(token)}`;
+  }
+}
+
 const DEFAULT_STATUS = {
   connected: false,
   mode: 'UNKNOWN',
@@ -27,7 +43,7 @@ export function useRobotWS() {
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
     try {
-      const ws = new WebSocket(WS_URL);
+      const ws = new WebSocket(buildDashboardWsUrl(WS_URL));
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -55,6 +71,8 @@ export function useRobotWS() {
               ...prev,
               robotConnected: msg.data?.connected ?? false,
             }));
+          } else if (msg.type === 'DIRECT_COMMAND_ACK' && msg.data?.success === false) {
+            console.warn('[WS] Direct command rejected:', msg.data?.error || 'Command rejected');
           }
         } catch {}
       };

@@ -60,7 +60,7 @@ function adminMiddleware(req, res, next) {
     if (req.user.role !== 'admin') {
         return res.status(403).json({
             success: false,
-            error: 'Admin role required'
+            error: 'You do not have permission to access this page.'
         });
     }
 

@@ -3,6 +3,10 @@ const express    = require('express');
 const router     = express.Router();
 const ManualCommandModel = require('../models/manualCommandModel');
 const wsManager  = require('../sockets/wsManager');
+const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
+
+router.use(authMiddleware);
+router.use(adminMiddleware);
 
 // GET /api/commands - Lấy tất cả commands
 router.get('/', async (req, res) => {

@@ -6,6 +6,7 @@ const express    = require('express');
 const router     = express.Router();
 const wsManager  = require('../sockets/wsManager');
 const RobotStateModel = require('../models/robotStateModel');
+const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
 
 // GET /api/robot/status — Trạng thái robot hiện tại (cache từ WS heartbeat)
 router.get('/status', (req, res) => {
@@ -40,7 +41,7 @@ router.get('/mode', async (req, res) => {
 
 // POST /api/robot/mode — Yêu cầu ESP32 đổi chế độ
 // Body: { "mode": "AUTONOMOUS" | "MANUAL", "userId": 1 (optional) }
-router.post('/mode', async (req, res) => {
+router.post('/mode', authMiddleware, adminMiddleware, async (req, res) => {
     const { mode, userId = null } = req.body;
     if (!mode || !['AUTONOMOUS', 'MANUAL'].includes(mode)) {
         return res.status(400).json({
