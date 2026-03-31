@@ -129,6 +129,7 @@ function ManualControl({ onBack, darkMode = true }) {
     if (toggling) {
       setToggling(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [robotStatus.mode]);
 
   const handleStop = useCallback(() => {
