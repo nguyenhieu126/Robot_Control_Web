@@ -143,11 +143,11 @@ wsManager.init(server);
 
 if (require.main === module) {
     server.listen(PORT, () => {
-        console.log(`🚀 Server running at http://localhost:${PORT}`);
-        console.log(`🔌 WebSocket    at ws://localhost:${PORT}/ws/robot`);
-        console.log(`📊 API Overview: http://localhost:${PORT}/api`);
-        console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
-        console.log(`🗄️  Database Health: http://localhost:${PORT}/api/db-health`);
+        console.log(`Server running at http://localhost:${PORT}`);
+        console.log(`WebSocket    at ws://localhost:${PORT}/ws/robot`);
+        console.log(`API Overview: http://localhost:${PORT}/api`);
+        console.log(`Health Check: http://localhost:${PORT}/api/health`);
+        console.log(`Database Health: http://localhost:${PORT}/api/db-health`);
     });
 }
 
