@@ -54,6 +54,9 @@ import CameraView from "./components/CameraView";
 import Connect from "./components/Connect";
 import MapTracking from "./components/MapTracking";
 import AuthPage from "./components/AuthPage";
+import UserManagement from "./components/UserManagement";
+import EventManagement from "./components/EventManagement";
+import UserProfile from "./components/UserProfile";
 import { useRobotApi } from "./hooks/useRobotApi";
 import {
   PAGE_TO_PATH,
@@ -302,6 +305,7 @@ function App() {
                     onNavigate={handleNavigate}
                     onLogout={handleLogout}
                     allowedMenuIds={getAllowedDashboardMenuIds(currentRole)}
+                    authUser={authUser}
                   />
                 </ProtectedRoute>
               }
@@ -355,6 +359,30 @@ function App() {
               element={
                 <ProtectedRoute authUser={authUser} routePath="/map">
                   <MapTracking darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/users">
+                  <UserManagement darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/events">
+                  <EventManagement darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/profile">
+                  <UserProfile darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
                 </ProtectedRoute>
               }
             />

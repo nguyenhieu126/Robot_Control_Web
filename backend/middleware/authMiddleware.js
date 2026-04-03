@@ -49,7 +49,35 @@ function authMiddleware(req, res, next) {
     }
 }
 
+function roleMiddleware(allowedRoles = []) {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                error: 'Unauthorized'
+            });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                error: 'You do not have permission to access this page.'
+            });
+        }
+
+        next();
+    };
+}
+
 function adminMiddleware(req, res, next) {
+    return roleMiddleware(['admin'])(req, res, next);
+}
+
+function adminOrSecurityMiddleware(req, res, next) {
+    return roleMiddleware(['admin', 'security'])(req, res, next);
+}
+
+function selfOrAdminMiddleware(req, res, next) {
     if (!req.user) {
         return res.status(401).json({
             success: false,
@@ -57,7 +85,11 @@ function adminMiddleware(req, res, next) {
         });
     }
 
-    if (req.user.role !== 'admin') {
+    const requestedId = Number(req.params.id);
+    const currentUserId = Number(req.user.sub);
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isAdmin && requestedId !== currentUserId) {
         return res.status(403).json({
             success: false,
             error: 'You do not have permission to access this page.'
@@ -69,5 +101,8 @@ function adminMiddleware(req, res, next) {
 
 module.exports = {
     authMiddleware,
-    adminMiddleware
+    adminMiddleware,
+    adminOrSecurityMiddleware,
+    selfOrAdminMiddleware,
+    roleMiddleware
 };

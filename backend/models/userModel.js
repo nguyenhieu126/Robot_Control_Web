@@ -3,14 +3,26 @@ const pool = require('../config/db');
 
 class UserModel {
     // Lấy tất cả users
-    static async getAllUsers() {
-        const result = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM users ORDER BY created_at DESC');
+    static async getAllUsers(role = null) {
+        const hasRoleFilter = typeof role === 'string' && role.trim().length > 0;
+        const result = hasRoleFilter
+            ? await pool.query(
+                'SELECT id, username, email, role, created_at, updated_at FROM users WHERE role = $1 ORDER BY created_at DESC',
+                [role.trim()]
+            )
+            : await pool.query('SELECT id, username, email, role, created_at, updated_at FROM users ORDER BY created_at DESC');
         return result.rows;
     }
 
     // Lấy user theo ID
     static async getUserById(id) {
         const result = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM users WHERE id = $1', [id]);
+        return result.rows[0];
+    }
+
+    // Lấy user theo ID (bao gồm password hash)
+    static async getUserByIdWithPassword(id) {
+        const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
         return result.rows[0];
     }
 
@@ -46,7 +58,7 @@ class UserModel {
 
     // Update user
     static async updateUser(id, updates) {
-        const allowedFields = ['role', 'email'];
+        const allowedFields = ['role', 'email', 'username'];
         const updates_arr = [];
         const values = [id];
         let paramCount = 2;
@@ -65,6 +77,17 @@ class UserModel {
 
         const query = `UPDATE users SET ${updates_arr.join(', ')} WHERE id = $1 RETURNING id, username, email, role, created_at, updated_at`;
         const result = await pool.query(query, values);
+        return result.rows[0];
+    }
+
+    static async updatePassword(id, passwordHash) {
+        const result = await pool.query(
+            `UPDATE users
+             SET password_hash = $2, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1
+             RETURNING id, username, email, role, created_at, updated_at`,
+            [id, passwordHash]
+        );
         return result.rows[0];
     }
 

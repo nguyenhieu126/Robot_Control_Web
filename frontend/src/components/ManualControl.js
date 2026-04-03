@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Joystick from './Joystick';
 import { useRobotWS }  from '../hooks/useRobotWS';
 import { useRobotApi } from '../hooks/useRobotApi';
-import './ManualControl.css';
+import './styles/ManualControl.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const STREAM_ENDPOINT = `${API_BASE}/api/camera/stream`;

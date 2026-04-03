@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './AuthPage.css';
+import './styles/AuthPage.css';
 
 function AuthPage({ darkMode = true, mode = 'login', onModeChange, onSubmit, loading = false, error = '' }) {
   const [form, setForm] = useState({ username: '', email: '', password: '' });

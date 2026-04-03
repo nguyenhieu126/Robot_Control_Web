@@ -1,5 +1,6 @@
 export const ROLES = Object.freeze({
   ADMIN: "admin",
+  SECURITY: "security",
   USER: "user",
 });
 
@@ -11,6 +12,9 @@ export const PAGE_TO_PATH = Object.freeze({
   cameraView: "/camera-view",
   connect: "/connect",
   map: "/map",
+  users: "/users",
+  events: "/events",
+  profile: "/profile",
 });
 
 const ROLE_PERMISSIONS = Object.freeze({
@@ -24,8 +28,22 @@ const ROLE_PERMISSIONS = Object.freeze({
       PAGE_TO_PATH.cameraView,
       PAGE_TO_PATH.connect,
       PAGE_TO_PATH.map,
+      PAGE_TO_PATH.users,
+      PAGE_TO_PATH.events,
+      PAGE_TO_PATH.profile,
     ]),
-    dashboardMenuIds: ["connect", "manual", "cameraView", "map", "settings"],
+    dashboardMenuIds: ["connect", "manual", "cameraView", "map", "events", "users", "profile", "settings"],
+  },
+  [ROLES.SECURITY]: {
+    defaultPath: PAGE_TO_PATH.dashboard,
+    allowedPaths: new Set([
+      PAGE_TO_PATH.dashboard,
+      PAGE_TO_PATH.cameraView,
+      PAGE_TO_PATH.map,
+      PAGE_TO_PATH.events,
+      PAGE_TO_PATH.profile,
+    ]),
+    dashboardMenuIds: ["cameraView", "map", "events", "profile"],
   },
   [ROLES.USER]: {
     defaultPath: PAGE_TO_PATH.dashboard,
@@ -33,8 +51,10 @@ const ROLE_PERMISSIONS = Object.freeze({
       PAGE_TO_PATH.dashboard,
       PAGE_TO_PATH.cameraView,
       PAGE_TO_PATH.map,
+      PAGE_TO_PATH.events,
+      PAGE_TO_PATH.profile,
     ]),
-    dashboardMenuIds: ["cameraView", "map"],
+    dashboardMenuIds: ["cameraView", "map", "events", "profile"],
   },
 });
 
@@ -43,7 +63,9 @@ function toBasePath(path) {
 }
 
 export function normalizeRole(role) {
-  return role === ROLES.ADMIN ? ROLES.ADMIN : ROLES.USER;
+  if (role === ROLES.ADMIN) return ROLES.ADMIN;
+  if (role === ROLES.SECURITY) return ROLES.SECURITY;
+  return ROLES.USER;
 }
 
 export function getDefaultPathForRole(role) {

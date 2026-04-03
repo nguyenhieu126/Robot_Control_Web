@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useRobotWS } from "../hooks/useRobotWS";
-import "./Dashboard.css";
+import "./styles/Dashboard.css";
 
 const SIZES = ["SM", "MD", "LG", "XL"];
 
@@ -55,6 +55,13 @@ const MENU_ITEMS = [
     desc: "Realtime GPS trail",
   },
   {
+    id: "events",
+    cls: "card-manual",
+    icon: "🧳",
+    label: "Abandoned Events",
+    desc: "Review and update incidents",
+  },
+  {
     id: "settings",
     cls: "card-settings",
     icon: "⚙",
@@ -63,10 +70,15 @@ const MENU_ITEMS = [
   },
 ];
 
-function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [] }) {
+function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [], authUser = null }) {
   const [size, setSize] = useState("XL");
   const theme = darkMode ? "dark" : "light";
   const { robotStatus, wsConnected } = useRobotWS();
+  const hasMenuRestrictions = Array.isArray(allowedMenuIds) && allowedMenuIds.length > 0;
+  const canManageUsers = !hasMenuRestrictions || allowedMenuIds.includes("users");
+  const canEditProfile = !hasMenuRestrictions || allowedMenuIds.includes("profile");
+  const displayName = authUser?.username || "operator";
+
   const visibleMenuItems = useMemo(() => {
     if (!Array.isArray(allowedMenuIds) || allowedMenuIds.length === 0) {
       return MENU_ITEMS;
@@ -107,6 +119,7 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [] 
     if (id === "connect"  && onNavigate) onNavigate("connect");
     if (id === "camera"   && onNavigate) onNavigate("manual");
     if (id === "map"      && onNavigate) onNavigate("map");
+    if (id === "events"   && onNavigate) onNavigate("events");
   };
 
   return (
@@ -142,7 +155,26 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [] 
               {wsConnected ? "Connected" : "Disconnected"}
             </div>
 
-            <button className="logout-btn" onClick={onLogout}>Đăng xuất</button>
+            <div className="user-menu" tabIndex={0}>
+              <button type="button" className="user-menu-trigger">
+                <span className="user-avatar">{String(displayName).charAt(0).toUpperCase()}</span>
+                <span className="user-meta">
+                  <span className="user-welcome">Welcome</span>
+                  <span className="user-name">{displayName}</span>
+                </span>
+                <span className="user-menu-caret">▾</span>
+              </button>
+
+              <div className="user-menu-dropdown">
+                {canEditProfile ? (
+                  <button type="button" className="user-menu-item" onClick={() => onNavigate && onNavigate("profile")}>Edit Personal Info</button>
+                ) : null}
+                {canManageUsers ? (
+                  <button type="button" className="user-menu-item" onClick={() => onNavigate && onNavigate("users")}>User Management</button>
+                ) : null}
+                <button type="button" className="user-menu-item user-menu-item--danger" onClick={onLogout}>Đăng xuất</button>
+              </div>
+            </div>
           </div>
         </header>
 

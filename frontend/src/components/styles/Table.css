@@ -1,0 +1,63 @@
+.tbl-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tbl-main {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tbl-main th,
+.tbl-main td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.92rem;
+}
+
+.tbl-main th {
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.tbl-state {
+  text-align: center;
+  padding: 18px;
+}
+
+.tbl-state--error {
+  color: #ff8f8f;
+}
+
+.tbl-row-clickable {
+  cursor: pointer;
+}
+
+.tbl-row-clickable:hover {
+  background: rgba(76, 201, 255, 0.08);
+}
+
+.tbl-pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 12px;
+}
+
+.tbl-pagination button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tbl-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

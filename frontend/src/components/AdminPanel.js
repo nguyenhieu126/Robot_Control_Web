@@ -1,5 +1,5 @@
 import React from 'react';
-import './AdminPanel.css';
+import './styles/AdminPanel.css';
 
 function AdminPanel({ user, onLogout, onNavigateDashboard }) {
   return (

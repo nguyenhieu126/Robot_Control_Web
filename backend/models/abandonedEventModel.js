@@ -3,14 +3,41 @@ const pool = require('../config/db');
 
 class AbandonedEventModel {
     // Lấy tất cả events
-    static async getAllEvents(limit = 100, offset = 0) {
+    static async getAllEvents({ limit = 100, offset = 0, status = null, from = null, to = null } = {}) {
+        const where = [];
+        const values = [];
+
+        if (status) {
+            values.push(status);
+            where.push(`ae.status = $${values.length}`);
+        }
+
+        if (from) {
+            values.push(from);
+            where.push(`ae.created_at >= $${values.length}`);
+        }
+
+        if (to) {
+            values.push(to);
+            where.push(`ae.created_at <= $${values.length}`);
+        }
+
+        values.push(limit);
+        const limitSlot = values.length;
+        values.push(offset);
+        const offsetSlot = values.length;
+
+        const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+
         const result = await pool.query(
-            `SELECT ae.*, d.object_type, d.confidence, u.username as confirmed_by_username
+            `SELECT ae.*, d.object_type, d.confidence, d.location_x, d.location_y, d.image_path AS detection_image_path, u.username as confirmed_by_username
              FROM abandoned_events ae
              LEFT JOIN detections d ON ae.detection_id = d.id
              LEFT JOIN users u ON ae.confirmed_by = u.id
-             ORDER BY ae.created_at DESC LIMIT $1 OFFSET $2`,
-            [limit, offset]
+             ${whereClause}
+             ORDER BY ae.created_at DESC
+             LIMIT $${limitSlot} OFFSET $${offsetSlot}`,
+            values
         );
         return result.rows;
     }
@@ -18,7 +45,7 @@ class AbandonedEventModel {
     // Lấy event theo ID
     static async getEventById(id) {
         const result = await pool.query(
-            `SELECT ae.*, d.object_type, d.confidence, u.username as confirmed_by_username
+            `SELECT ae.*, d.object_type, d.confidence, d.location_x, d.location_y, d.image_path AS detection_image_path, u.username as confirmed_by_username
              FROM abandoned_events ae
              LEFT JOIN detections d ON ae.detection_id = d.id
              LEFT JOIN users u ON ae.confirmed_by = u.id
@@ -30,16 +57,7 @@ class AbandonedEventModel {
 
     // Lấy events theo status
     static async getEventsByStatus(status, limit = 50) {
-        const result = await pool.query(
-            `SELECT ae.*, d.object_type, d.confidence, u.username as confirmed_by_username
-             FROM abandoned_events ae
-             LEFT JOIN detections d ON ae.detection_id = d.id
-             LEFT JOIN users u ON ae.confirmed_by = u.id
-             WHERE ae.status = $1
-             ORDER BY ae.created_at DESC LIMIT $2`,
-            [status, limit]
-        );
-        return result.rows;
+        return this.getAllEvents({ status, limit, offset: 0 });
     }
 
     // Tạo abandoned event mới
@@ -56,9 +74,20 @@ class AbandonedEventModel {
     // Cập nhật status
     static async updateStatus(id, status, confirmedBy = null, note = null) {
         const query = confirmedBy
-            ? `UPDATE abandoned_events SET status = $1, confirmed_by = $2, note = $3 WHERE id = $4 RETURNING *`
-            : `UPDATE abandoned_events SET status = $1, note = $3 WHERE id = $4 RETURNING *`;
-        
+            ? `UPDATE abandoned_events
+               SET status = $1,
+                   confirmed_by = $2,
+                   note = $3,
+                   resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END
+               WHERE id = $4
+               RETURNING *`
+            : `UPDATE abandoned_events
+               SET status = $1,
+                   note = $3,
+                   resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END
+               WHERE id = $4
+               RETURNING *`;
+
         const params = confirmedBy ? [status, confirmedBy, note, id] : [status, null, note, id];
         const result = await pool.query(query, params);
         return result.rows[0];
@@ -79,7 +108,7 @@ class AbandonedEventModel {
     // Lấy events chưa xử lý
     static async getPendingEvents() {
         const result = await pool.query(
-            `SELECT ae.*, d.object_type, d.confidence
+            `SELECT ae.*, d.object_type, d.confidence, d.location_x, d.location_y, d.image_path AS detection_image_path
              FROM abandoned_events ae
              LEFT JOIN detections d ON ae.detection_id = d.id
              WHERE ae.status IN ('pending', 'confirmed')
@@ -93,10 +122,16 @@ class AbandonedEventModel {
         const result = await pool.query(
             `SELECT status, COUNT(*) as count
              FROM abandoned_events
-             WHERE created_at > NOW() - INTERVAL '${hours} hours'
-             GROUP BY status`
+             WHERE created_at > NOW() - ($1::INT * INTERVAL '1 hour')
+             GROUP BY status`,
+            [hours]
         );
         return result.rows;
+    }
+
+    static async deleteEvent(id) {
+        const result = await pool.query('DELETE FROM abandoned_events WHERE id = $1 RETURNING id', [id]);
+        return result.rowCount > 0;
     }
 }
 

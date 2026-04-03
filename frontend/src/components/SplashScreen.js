@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import "./SplashScreen.css";
+import "./styles/SplashScreen.css";
 
 // Each stage: [targetPercent, pauseMs, stepLabel]
 const STAGES = [

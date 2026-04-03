@@ -7,7 +7,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useRobotApi } from '../hooks/useRobotApi';
 import { useRobotWS } from '../hooks/useRobotWS';
-import './MapTracking.css';
+import './styles/MapTracking.css';
 
 const DEFAULT_CENTER = [10.7769, 106.7009];
 

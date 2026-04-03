@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "./CameraView.css";
+import "./styles/CameraView.css";
 
 const DEFAULT_STREAM_URL = "http://192.168.1.12/stream.mjpg";
 const STREAM_ENDPOINT = process.env.REACT_APP_CAMERA_DIRECT_STREAM_URL || DEFAULT_STREAM_URL;

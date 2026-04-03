@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import "./Connect.css";
+import "./styles/Connect.css";
 
 const WS_URL = process.env.REACT_APP_WS_DASHBOARD || "ws://localhost:5000/ws/dashboard";
 
