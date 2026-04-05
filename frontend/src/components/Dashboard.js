@@ -172,7 +172,7 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
                 {canManageUsers ? (
                   <button type="button" className="user-menu-item" onClick={() => onNavigate && onNavigate("users")}>User Management</button>
                 ) : null}
-                <button type="button" className="user-menu-item user-menu-item--danger" onClick={onLogout}>Đăng xuất</button>
+                <button type="button" className="user-menu-item user-menu-item--danger" onClick={onLogout}>Log out</button>
               </div>
             </div>
           </div>

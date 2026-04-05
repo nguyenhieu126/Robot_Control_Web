@@ -45,7 +45,7 @@ function AuthPage({ darkMode = true, mode = 'login', onModeChange, onSubmit, loa
               value={isLogin ? (form.email || '') : form.email}
               onChange={handleChange('email')}
               required
-              placeholder={isLogin ? 'admin@robot.local or admin' : 'you@example.com'}
+              placeholder="Enter username or email"
             />
           </label>
 
