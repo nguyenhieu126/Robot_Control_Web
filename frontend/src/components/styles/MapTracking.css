@@ -116,3 +116,35 @@
     min-height: 360px;
   }
 }
+
+@media (max-width: 640px) {
+  .map-header {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .map-header h1 {
+    font-size: 1.05rem;
+  }
+
+  .map-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .map-btn {
+    width: 100%;
+    padding: 8px 10px;
+  }
+
+  .map-stats {
+    grid-template-columns: 1fr;
+    font-size: 0.86rem;
+  }
+
+  .map-canvas,
+  .map-leaflet {
+    min-height: 300px;
+  }
+}

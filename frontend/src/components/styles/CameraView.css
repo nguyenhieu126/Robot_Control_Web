@@ -235,3 +235,59 @@
     min-height: 220px;
   }
 }
+
+@media (max-width: 600px) {
+  .cv-page {
+    padding: 10px;
+  }
+
+  .cv-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .cv-back {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cv-title-wrap h1 {
+    font-size: 1.15rem;
+  }
+
+  .cv-title-wrap p {
+    font-size: 0.82rem;
+  }
+
+  .cv-badge {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    padding: 7px 10px;
+  }
+
+  .cv-stream-card,
+  .cv-status-card {
+    border-radius: 14px;
+    padding: 10px;
+  }
+
+  .cv-stream-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cv-btn {
+    width: 100%;
+  }
+
+  .cv-stream-shell {
+    min-height: 190px;
+  }
+
+  .cv-row {
+    font-size: 0.86rem;
+    align-items: flex-start;
+  }
+}

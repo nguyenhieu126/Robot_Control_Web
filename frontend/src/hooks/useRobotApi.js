@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
+import { getApiBaseUrl } from '../utils/runtimeEndpoints';
 
-const BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BASE = getApiBaseUrl();
 const DEFAULT_USER_ID = 1;
 
 export function useRobotApi() {

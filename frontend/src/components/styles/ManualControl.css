@@ -773,3 +773,88 @@
     width: 70%;
   }
 }
+
+@media (max-width: 768px) {
+  .mc-header {
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .mc-title {
+    min-width: 0;
+  }
+
+  .mc-title h1 {
+    font-size: 1.1rem;
+  }
+
+  .mc-title p {
+    font-size: 0.72rem;
+  }
+
+  .mc-mode-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mc-card,
+  .mc-actions,
+  .mc-statusbar,
+  .mc-sensors,
+  .mc-banner,
+  .mc-sliders-grid {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  .mc-card {
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .mc-coords {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .mc-live-head-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .mc-live-stream-wrap {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .mc-actions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .mc-tuning-actions {
+    flex-direction: column;
+  }
+
+  .mc-action-inline {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mc-sensor-item {
+    min-width: calc(50% - 5px);
+  }
+}
+
+@media (max-width: 420px) {
+  .mc-sensor-item {
+    min-width: 100%;
+  }
+
+  .mc-coord-val {
+    font-size: 0.8rem;
+  }
+}

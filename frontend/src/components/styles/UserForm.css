@@ -17,3 +17,13 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+@media (max-width: 640px) {
+  .user-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .user-form-actions .admin-btn {
+    width: 100%;
+  }
+}

@@ -27,3 +27,15 @@
 .toast--error {
   background: #b42330;
 }
+
+@media (max-width: 640px) {
+  .toast {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    min-width: 0;
+    max-width: none;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+}

@@ -1,12 +1,15 @@
 .tbl-wrap {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   background: rgba(255, 255, 255, 0.04);
 }
 
 .tbl-main {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
 }
 
@@ -60,4 +63,34 @@
 .tbl-pagination button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .tbl-main {
+    min-width: 640px;
+  }
+
+  .tbl-main th,
+  .tbl-main td {
+    font-size: 0.84rem;
+    padding: 8px 9px;
+    white-space: nowrap;
+  }
+
+  .tbl-pagination {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tbl-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tbl-pagination button {
+    width: 100%;
+  }
 }

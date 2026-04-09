@@ -19,9 +19,32 @@ const gpsRoutes           = require('./routes/gpsRoutes');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+    origin(origin, callback) {
+        // Allow server-to-server requests (curl/postman) without origin header.
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        // Keep previous permissive behavior when no allow-list is configured.
+        if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+};
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -100,9 +123,11 @@ app.get('/api', (req, res) => {
 // WebSocket path — chặn HTTP request vào /ws/* để tránh 404 khó hiểu
 app.get('/ws/robot', (req, res) => {
     const connected = wsManager.isRobotConnected();
+    const protocol = (req.headers['x-forwarded-proto'] || req.protocol) === 'https' ? 'wss' : 'ws';
+    const host = req.headers.host || `localhost:${PORT}`;
     res.json({
         info: 'Đây là WebSocket endpoint — không thể truy cập bằng HTTP.',
-        usage: 'Kết nối bằng: ws://localhost:5000/ws/robot',
+        usage: `Kết nối bằng: ${protocol}://${host}/ws/robot`,
         robotConnected: connected,
         status: wsManager.getRobotStatus(),
     });
@@ -110,9 +135,11 @@ app.get('/ws/robot', (req, res) => {
 
 app.get('/ws/dashboard', (req, res) => {
     const connected = wsManager.isRobotConnected();
+    const protocol = (req.headers['x-forwarded-proto'] || req.protocol) === 'https' ? 'wss' : 'ws';
+    const host = req.headers.host || `localhost:${PORT}`;
     res.json({
         info: 'Đây là WebSocket endpoint dành cho Dashboard — không thể truy cập bằng HTTP.',
-        usage: 'Kết nối bằng: ws://localhost:5000/ws/dashboard',
+        usage: `Kết nối bằng: ${protocol}://${host}/ws/dashboard`,
         robotConnected: connected,
         status: wsManager.getRobotStatus(),
     });
@@ -142,12 +169,22 @@ const server = http.createServer(app);
 wsManager.init(server);
 
 if (require.main === module) {
-    server.listen(PORT, () => {
-        console.log(`Server running at http://localhost:${PORT}`);
-        console.log(`WebSocket    at ws://localhost:${PORT}/ws/robot`);
-        console.log(`API Overview: http://localhost:${PORT}/api`);
-        console.log(`Health Check: http://localhost:${PORT}/api/health`);
-        console.log(`Database Health: http://localhost:${PORT}/api/db-health`);
+    server.listen(PORT, HOST, () => {
+        const localHttp = `http://localhost:${PORT}`;
+        const localWs = `ws://localhost:${PORT}/ws/robot`;
+
+        console.log(`Server listening on ${HOST}:${PORT}`);
+        console.log(`Local API     : ${localHttp}`);
+        console.log(`Local WebSocket: ${localWs}`);
+        console.log(`API Overview  : ${localHttp}/api`);
+        console.log(`Health Check  : ${localHttp}/api/health`);
+        console.log(`Database Health: ${localHttp}/api/db-health`);
+
+        if (allowedOrigins.length > 0) {
+            console.log(`CORS allow-list: ${allowedOrigins.join(', ')}`);
+        } else {
+            console.log('CORS allow-list: not set (allowing all origins)');
+        }
     });
 }
 

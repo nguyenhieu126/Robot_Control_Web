@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { getWsDashboardUrl } from "../utils/runtimeEndpoints";
 import "./styles/Connect.css";
 
-const WS_URL = process.env.REACT_APP_WS_DASHBOARD || "ws://localhost:5000/ws/dashboard";
+const WS_URL = getWsDashboardUrl();
 
 const STATE_NAMES = {
   "-1": "Unknown",

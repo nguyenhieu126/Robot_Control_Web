@@ -15,6 +15,10 @@
   background: #0f1d33;
   color: #ecf3ff;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-card--small {
@@ -53,4 +57,31 @@
 
 .modal-body {
   padding: 14px;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
+}
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .modal-card {
+    border-radius: 14px 14px 0 0;
+    max-height: 88vh;
+  }
+
+  .modal-header {
+    padding: 10px 12px;
+  }
+
+  .modal-header h3 {
+    font-size: 0.96rem;
+  }
+
+  .modal-body {
+    padding: 12px;
+    max-height: calc(88vh - 120px);
+  }
 }
