@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRobotWS } from "../hooks/useRobotWS";
-import "./Dashboard.css";
+import "./styles/Dashboard.css";
 
 const SIZES = ["SM", "MD", "LG", "XL"];
 
@@ -18,6 +18,13 @@ const MENU_ITEMS = [
     icon: "✋",
     label: "Manual Control",
     desc: "Drive control + live camera",
+  },
+  {
+    id: "cameraView",
+    cls: "card-sliders",
+    icon: "🎥",
+    label: "Camera View",
+    desc: "Live stream only",
   },
   // {
   //   id: "sliders",
@@ -48,6 +55,13 @@ const MENU_ITEMS = [
     desc: "Realtime GPS trail",
   },
   {
+    id: "events",
+    cls: "card-manual",
+    icon: "🧳",
+    label: "Abandoned Events",
+    desc: "Review and update incidents",
+  },
+  {
     id: "settings",
     cls: "card-settings",
     icon: "⚙",
@@ -56,10 +70,22 @@ const MENU_ITEMS = [
   },
 ];
 
-function Dashboard({ onNavigate, onLogout, darkMode = true }) {
+function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [], authUser = null }) {
   const [size, setSize] = useState("XL");
   const theme = darkMode ? "dark" : "light";
   const { robotStatus, wsConnected } = useRobotWS();
+  const hasMenuRestrictions = Array.isArray(allowedMenuIds) && allowedMenuIds.length > 0;
+  const canManageUsers = !hasMenuRestrictions || allowedMenuIds.includes("users");
+  const canEditProfile = !hasMenuRestrictions || allowedMenuIds.includes("profile");
+  const displayName = authUser?.username || "operator";
+
+  const visibleMenuItems = useMemo(() => {
+    if (!Array.isArray(allowedMenuIds) || allowedMenuIds.length === 0) {
+      return MENU_ITEMS;
+    }
+
+    return MENU_ITEMS.filter((item) => allowedMenuIds.includes(item.id));
+  }, [allowedMenuIds]);
 
   const robotConnected = !!robotStatus.robotConnected;
   const connectionText = robotConnected ? "Connected" : "Disconnected";
@@ -88,10 +114,12 @@ function Dashboard({ onNavigate, onLogout, darkMode = true }) {
   const handleCardClick = (id) => {
     if (id === "settings" && onNavigate) onNavigate("settings");
     if (id === "manual"   && onNavigate) onNavigate("manual");
+    if (id === "cameraView" && onNavigate) onNavigate("cameraView");
     if (id === "auto"     && onNavigate) onNavigate("manual");  // auto card cũng vào manual để toggle
     if (id === "connect"  && onNavigate) onNavigate("connect");
     if (id === "camera"   && onNavigate) onNavigate("manual");
     if (id === "map"      && onNavigate) onNavigate("map");
+    if (id === "events"   && onNavigate) onNavigate("events");
   };
 
   return (
@@ -127,7 +155,26 @@ function Dashboard({ onNavigate, onLogout, darkMode = true }) {
               {wsConnected ? "Connected" : "Disconnected"}
             </div>
 
-            <button className="logout-btn" onClick={onLogout}>Đăng xuất</button>
+            <div className="user-menu" tabIndex={0}>
+              <button type="button" className="user-menu-trigger">
+                <span className="user-avatar">{String(displayName).charAt(0).toUpperCase()}</span>
+                <span className="user-meta">
+                  <span className="user-welcome">Welcome</span>
+                  <span className="user-name">{displayName}</span>
+                </span>
+                <span className="user-menu-caret">▾</span>
+              </button>
+
+              <div className="user-menu-dropdown">
+                {canEditProfile ? (
+                  <button type="button" className="user-menu-item" onClick={() => onNavigate && onNavigate("profile")}>Edit Personal Info</button>
+                ) : null}
+                {canManageUsers ? (
+                  <button type="button" className="user-menu-item" onClick={() => onNavigate && onNavigate("users")}>User Management</button>
+                ) : null}
+                <button type="button" className="user-menu-item user-menu-item--danger" onClick={onLogout}>Log out</button>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -180,7 +227,7 @@ function Dashboard({ onNavigate, onLogout, darkMode = true }) {
         <div className="menu-section">
           <p className="section-label">Navigation</p>
           <div className="menu">
-            {MENU_ITEMS.map((item) => (
+            {visibleMenuItems.map((item) => (
               <div key={item.id} className={`card ${item.cls}`} onClick={() => handleCardClick(item.id)}>
                 <div className="icon-badge">{item.icon}</div>
                 <span className="card-label">{item.label}</span>

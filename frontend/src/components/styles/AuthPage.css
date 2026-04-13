@@ -102,3 +102,33 @@
   cursor: pointer;
   padding: 0;
 }
+
+@media (max-width: 520px) {
+  .auth-page {
+    padding: 14px;
+  }
+
+  .auth-card {
+    border-radius: 16px;
+    padding: 20px 16px;
+  }
+
+  .auth-card h1 {
+    font-size: 1.45rem;
+  }
+
+  .auth-subtitle {
+    margin: 6px 0 14px;
+    font-size: 0.92rem;
+  }
+
+  .auth-form input {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+
+  .auth-form button[type='submit'] {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}

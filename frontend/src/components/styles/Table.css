@@ -1,0 +1,96 @@
+.tbl-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tbl-main {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.tbl-main th,
+.tbl-main td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.92rem;
+}
+
+.tbl-main th {
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.tbl-state {
+  text-align: center;
+  padding: 18px;
+}
+
+.tbl-state--error {
+  color: #ff8f8f;
+}
+
+.tbl-row-clickable {
+  cursor: pointer;
+}
+
+.tbl-row-clickable:hover {
+  background: rgba(76, 201, 255, 0.08);
+}
+
+.tbl-pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 12px;
+}
+
+.tbl-pagination button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tbl-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .tbl-main {
+    min-width: 640px;
+  }
+
+  .tbl-main th,
+  .tbl-main td {
+    font-size: 0.84rem;
+    padding: 8px 9px;
+    white-space: nowrap;
+  }
+
+  .tbl-pagination {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tbl-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tbl-pagination button {
+    width: 100%;
+  }
+}

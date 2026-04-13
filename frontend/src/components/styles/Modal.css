@@ -1,0 +1,87 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.modal-card {
+  width: 100%;
+  border-radius: 14px;
+  background: #0f1d33;
+  color: #ecf3ff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-card--small {
+  max-width: 420px;
+}
+
+.modal-card--medium {
+  max-width: 680px;
+}
+
+.modal-card--large {
+  max-width: 960px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  color: #c9d8ef;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 14px;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
+}
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .modal-card {
+    border-radius: 14px 14px 0 0;
+    max-height: 88vh;
+  }
+
+  .modal-header {
+    padding: 10px 12px;
+  }
+
+  .modal-header h3 {
+    font-size: 0.96rem;
+  }
+
+  .modal-body {
+    padding: 12px;
+    max-height: calc(88vh - 120px);
+  }
+}

@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Joystick from './Joystick';
 import { useRobotWS }  from '../hooks/useRobotWS';
 import { useRobotApi } from '../hooks/useRobotApi';
-import './ManualControl.css';
+import { getApiBaseUrl } from '../utils/runtimeEndpoints';
+import './styles/ManualControl.css';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = getApiBaseUrl();
 const STREAM_ENDPOINT = `${API_BASE}/api/camera/stream`;
 
 const STATE_NAMES = [
@@ -233,7 +234,7 @@ function ManualControl({ onBack, darkMode = true }) {
           className={`mc-mode-btn ${isManual ? 'mode-is-manual' : 'mode-is-auto'} ${toggling ? 'mode-busy' : ''}`}
           onClick={handleToggleMode}
           disabled={toggling}
-          title={`Hiện tại: ${isManual ? 'MANUAL' : 'AUTONOMOUS'}. Nhấn để chuyển sang ${isManual ? 'AUTONOMOUS' : 'MANUAL'}`}
+          title={`Current: ${isManual ? 'MANUAL' : 'AUTONOMOUS'}. Click to switch to ${isManual ? 'AUTONOMOUS' : 'MANUAL'}`}
         >
           {toggling
             ? <span className="mc-spin" />
@@ -248,7 +249,7 @@ function ManualControl({ onBack, darkMode = true }) {
       {!robotOnline && (
         <div className="mc-banner mc-banner-warn">
           <span>⚠</span>
-          <span>ESP32 chưa kết nối — lệnh được lưu hàng đợi, gửi khi robot online</span>
+          <span>ESP32 is not connected — commands are queued and sent when the robot is online</span>
         </div>
       )}
 

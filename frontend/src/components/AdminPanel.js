@@ -1,5 +1,5 @@
 import React from 'react';
-import './AdminPanel.css';
+import './styles/AdminPanel.css';
 
 function AdminPanel({ user, onLogout, onNavigateDashboard }) {
   return (
@@ -14,8 +14,8 @@ function AdminPanel({ user, onLogout, onNavigateDashboard }) {
         </ul>
 
         <div className="admin-actions">
-          <button onClick={onNavigateDashboard}>Đi tới Dashboard</button>
-          <button className="danger" onClick={onLogout}>Đăng xuất</button>
+          <button onClick={onNavigateDashboard}>Go to Dashboard</button>
+          <button className="danger" onClick={onLogout}>Log out</button>
         </div>
       </section>
     </div>

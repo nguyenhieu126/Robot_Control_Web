@@ -47,6 +47,34 @@ function validateLoginInput({ identifier, password }) {
     return null;
 }
 
+function validateEmailInput(email) {
+    if (!email || typeof email !== 'string') {
+        return 'email is required';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return 'invalid email format';
+    }
+
+    return null;
+}
+
+function validatePasswordChangeInput({ oldPassword, newPassword, confirmPassword }) {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        return 'oldPassword, newPassword, confirmPassword are required';
+    }
+
+    if (typeof newPassword !== 'string' || newPassword.length < 6) {
+        return 'newPassword must be at least 6 characters';
+    }
+
+    if (newPassword !== confirmPassword) {
+        return 'confirmPassword does not match newPassword';
+    }
+
+    return null;
+}
+
 function signToken(user) {
     if (!process.env.JWT_SECRET) {
         throw new Error('JWT secret is not configured');
@@ -147,6 +175,64 @@ class AuthController {
             return res.json({
                 success: true,
                 data: sanitizeUser(user)
+            });
+        } catch (error) {
+            return res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    static async updateMe(req, res) {
+        try {
+            const email = (req.body.email || '').trim().toLowerCase();
+            const validationError = validateEmailInput(email);
+            if (validationError) {
+                return res.status(400).json({ success: false, error: validationError });
+            }
+
+            const existingByEmail = await UserModel.getUserByEmail(email);
+            if (existingByEmail && Number(existingByEmail.id) !== Number(req.user.sub)) {
+                return res.status(409).json({ success: false, error: 'email already exists' });
+            }
+
+            const updated = await UserModel.updateUser(req.user.sub, { email });
+            if (!updated) {
+                return res.status(404).json({ success: false, error: 'user not found' });
+            }
+
+            return res.json({
+                success: true,
+                message: 'profile updated',
+                data: sanitizeUser(updated)
+            });
+        } catch (error) {
+            return res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    static async changePassword(req, res) {
+        try {
+            const validationError = validatePasswordChangeInput(req.body || {});
+            if (validationError) {
+                return res.status(400).json({ success: false, error: validationError });
+            }
+
+            const { oldPassword, newPassword } = req.body;
+            const user = await UserModel.getUserByIdWithPassword(req.user.sub);
+            if (!user) {
+                return res.status(404).json({ success: false, error: 'user not found' });
+            }
+
+            const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ success: false, error: 'oldPassword is incorrect' });
+            }
+
+            const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+            await UserModel.updatePassword(user.id, newPasswordHash);
+
+            return res.json({
+                success: true,
+                message: 'password changed successfully'
             });
         } catch (error) {
             return res.status(500).json({ success: false, error: error.message });

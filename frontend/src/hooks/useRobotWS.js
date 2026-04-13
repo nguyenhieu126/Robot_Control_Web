@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getWsDashboardUrl } from '../utils/runtimeEndpoints';
 
-const WS_URL = process.env.REACT_APP_WS_DASHBOARD || 'ws://localhost:5000/ws/dashboard';
+const WS_URL = getWsDashboardUrl();
 
 const DEFAULT_STATUS = {
   connected: false,

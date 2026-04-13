@@ -7,7 +7,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useRobotApi } from '../hooks/useRobotApi';
 import { useRobotWS } from '../hooks/useRobotWS';
-import './MapTracking.css';
+import './styles/MapTracking.css';
 
 const DEFAULT_CENTER = [10.7769, 106.7009];
 
@@ -142,7 +142,7 @@ export default function MapTracking({ onBack, darkMode = true }) {
 
       {!hasFix ? (
         <div className="map-warning">
-          Chua co GPS fix. Dua xe ra ngoai troi thoang de bat ve tinh, khi co fix he thong se hien thi Location.
+         The robot does not have a GPS fix. Please ensure the robot is outdoors and has a clear view of the sky.
         </div>
       ) : null}
 

@@ -10,6 +10,7 @@
  */
 
 const WebSocket = require('ws');
+const jwt = require('jsonwebtoken');
 const RobotGpsLogModel = require('../models/robotGpsLogModel');
 
 const GPS_ROBOT_ID = process.env.GPS_ROBOT_ID || 'kali-vega-01';
@@ -38,6 +39,44 @@ let robotStatus = {
   back:      null,
   gps:       null,
 };
+
+function _normalizeRole(role) {
+  return role === 'admin' ? 'admin' : 'user';
+}
+
+function _extractDashboardToken(req) {
+  const parsedUrl = new URL(req.url, 'http://localhost');
+  const tokenFromQuery = parsedUrl.searchParams.get('token');
+  if (tokenFromQuery) {
+    return tokenFromQuery;
+  }
+
+  const authHeader = req.headers.authorization || '';
+  const [scheme, token] = authHeader.split(' ');
+  if (scheme === 'Bearer' && token) {
+    return token;
+  }
+
+  return null;
+}
+
+function _resolveDashboardClientAuth(req) {
+  const token = _extractDashboardToken(req);
+  if (!token || !process.env.JWT_SECRET) {
+    return { role: 'user', userId: null, username: null };
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    return {
+      role: _normalizeRole(payload?.role),
+      userId: payload?.sub ?? null,
+      username: payload?.username ?? null,
+    };
+  } catch {
+    return { role: 'user', userId: null, username: null };
+  }
+}
 
 // ══════════════════════════════════════════════════════════════
 //  Init — gắn vào HTTP server của Express
@@ -102,7 +141,8 @@ function init(server) {
 
   dashboardWss.on('connection', (ws, req) => {
     const ip = req.socket.remoteAddress;
-    console.log(`[WS/dashboard] Browser connected from ${ip}`);
+    ws.clientAuth = _resolveDashboardClientAuth(req);
+    console.log(`[WS/dashboard] Browser connected from ${ip} role=${ws.clientAuth.role}`);
     dashboardClients.add(ws);
 
     // Gửi status hiện tại ngay khi kết nối
@@ -119,6 +159,14 @@ function init(server) {
         const msg = JSON.parse(raw.toString());
 
         if (msg.type === 'DIRECT_COMMAND') {
+          if (ws.clientAuth?.role !== 'admin') {
+            _send(ws, {
+              type: 'DIRECT_COMMAND_ACK',
+              data: { success: false, status: 403, error: 'Ban khong co quyen truy cap trang nay.' },
+            });
+            return;
+          }
+
           const now = Date.now();
 
           if (now - lastCommandTime < COMMAND_INTERVAL) {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./Settings.css";
+import "./styles/Settings.css";
 
 const INITIAL_PROFILES = [
   { id: 1, name: "RoboArm-X1",   type: "Industrial",  time: "2 hours ago", active: true  },

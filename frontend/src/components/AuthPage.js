@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './AuthPage.css';
+import './styles/AuthPage.css';
 
 function AuthPage({ darkMode = true, mode = 'login', onModeChange, onSubmit, loading = false, error = '' }) {
   const [form, setForm] = useState({ username: '', email: '', password: '' });
@@ -18,9 +18,9 @@ function AuthPage({ darkMode = true, mode = 'login', onModeChange, onSubmit, loa
   return (
     <div className={`auth-page auth-page--${darkMode ? 'dark' : 'light'}`}>
       <div className="auth-card">
-        <h1>{isLogin ? 'Đăng Nhập' : 'Đăng Ký'}</h1>
+        <h1>{isLogin ? 'Login' : 'Register'}</h1>
         <p className="auth-subtitle">
-          {isLogin ? 'Đăng nhập để điều khiển robot.' : 'Tạo tài khoản mới để bắt đầu.'}
+          {isLogin ? 'Login to control the robot.' : 'Create a new account to get started.'}
         </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -33,19 +33,19 @@ function AuthPage({ darkMode = true, mode = 'login', onModeChange, onSubmit, loa
                 onChange={handleChange('username')}
                 required
                 minLength={3}
-                placeholder="Nhập username"
+                placeholder="Enter username"
               />
             </label>
           )}
 
           <label>
-            {isLogin ? 'Email hoặc Username' : 'Email'}
+            {isLogin ? 'Email or Username' : 'Email'}
             <input
               type="text"
               value={isLogin ? (form.email || '') : form.email}
               onChange={handleChange('email')}
               required
-              placeholder={isLogin ? 'admin@robot.local hoặc admin' : 'you@example.com'}
+              placeholder="Enter username or email"
             />
           </label>
 
@@ -57,25 +57,25 @@ function AuthPage({ darkMode = true, mode = 'login', onModeChange, onSubmit, loa
               onChange={handleChange('password')}
               required
               minLength={6}
-              placeholder="Nhập mật khẩu"
+              placeholder="Enter password"
             />
           </label>
 
           {error && <p className="auth-error">{error}</p>}
 
           <button type="submit" disabled={loading}>
-            {loading ? 'Đang xử lý...' : isLogin ? 'Đăng nhập' : 'Đăng ký'}
+            {loading ? 'Processing...' : isLogin ? 'Login' : 'Register'}
           </button>
         </form>
 
         <p className="auth-switch">
-          {isLogin ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
+          {isLogin ? 'Don\'t have an account?' : 'Already have an account?'}{' '}
           <button
             type="button"
             className="link-button"
             onClick={() => onModeChange(isLogin ? 'register' : 'login')}
           >
-            {isLogin ? 'Đăng ký ngay' : 'Đăng nhập'}
+            {isLogin ? 'Register now' : 'Login'}
           </button>
         </p>
       </div>

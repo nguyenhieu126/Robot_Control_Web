@@ -45,26 +45,81 @@
 // export default App;
 
 import React, { useState, useEffect } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import SplashScreen from "./components/SplashScreen";
 import Dashboard from "./components/Dashboard";
 import Settings from "./components/Settings";
 import ManualControl from "./components/ManualControl";
+import CameraView from "./components/CameraView";
 import Connect from "./components/Connect";
 import MapTracking from "./components/MapTracking";
 import AuthPage from "./components/AuthPage";
+import UserManagement from "./components/UserManagement";
+import EventManagement from "./components/EventManagement";
+import UserProfile from "./components/UserProfile";
 import { useRobotApi } from "./hooks/useRobotApi";
+import {
+  PAGE_TO_PATH,
+  canAccessPath,
+  getAllowedDashboardMenuIds,
+  getDefaultPathForRole,
+  normalizeRole,
+} from "./constants/rolePermissions";
+
+function resolveRedirectPath(path, role) {
+  const fallbackPath = getDefaultPathForRole(role);
+
+  if (typeof path !== "string" || !path.startsWith("/")) {
+    return fallbackPath;
+  }
+
+  if (!canAccessPath(role, path)) {
+    return fallbackPath;
+  }
+
+  return path;
+}
+
+function ProtectedRoute({ authUser, routePath, children }) {
+  const location = useLocation();
+
+  if (!authUser) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+      />
+    );
+  }
+
+  const role = normalizeRole(authUser?.role);
+  if (!canAccessPath(role, routePath)) {
+    return (
+      <Navigate
+        to={getDefaultPathForRole(role)}
+        replace
+        state={{ accessDenied: "You do not have permission to access this page." }}
+      />
+    );
+  }
+
+  return children;
+}
 
 function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { register, login, getMe } = useRobotApi();
   const [showSplash, setShowSplash] = useState(() => !localStorage.getItem("auth_user"));
-  const [page, setPage] = useState("dashboard");
-  const [authMode, setAuthMode] = useState("login");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [accessNotice, setAccessNotice] = useState("");
   const [authUser, setAuthUser] = useState(() => {
     const raw = localStorage.getItem("auth_user");
     return raw ? JSON.parse(raw) : null;
   });
+  const currentRole = normalizeRole(authUser?.role);
 
   // Read saved theme from localStorage, default to dark if not set
   const [darkMode, setDarkMode] = useState(() => {
@@ -96,12 +151,32 @@ function App() {
 
       localStorage.setItem("auth_user", JSON.stringify(res.data));
       setAuthUser(res.data);
-      setPage("dashboard");
       setShowSplash(false);
-    });
-  }, [getMe]);
 
-  const handleLoginOrRegister = async (payload) => {
+      const currentPath = window.location.pathname;
+      if (currentPath === "/" || currentPath === "/login" || currentPath === "/register") {
+        navigate(resolveRedirectPath(location.state?.from, normalizeRole(res.data?.role)), { replace: true });
+      }
+    });
+  }, [getMe, location.state, navigate]);
+
+  useEffect(() => {
+    const deniedMessage = location.state?.accessDenied;
+    if (!deniedMessage) {
+      return;
+    }
+
+    setAccessNotice(String(deniedMessage));
+    const timeoutId = setTimeout(() => setAccessNotice(""), 3000);
+    return () => clearTimeout(timeoutId);
+  }, [location.state]);
+
+  const requestedPathAfterLogin = typeof location.state?.from === "string"
+    ? location.state.from
+    : undefined;
+  const redirectAfterLogin = resolveRedirectPath(requestedPathAfterLogin, currentRole);
+
+  const handleLoginOrRegister = async (payload, authMode, requestedPath) => {
     setAuthLoading(true);
     setAuthError("");
 
@@ -114,7 +189,7 @@ function App() {
       });
 
       if (res?.success) {
-        setAuthMode("login");
+        navigate("/login", { replace: true, state: { from: requestedPath } });
       }
     } else {
       res = await login({
@@ -126,8 +201,8 @@ function App() {
         localStorage.setItem("auth_token", res.data.token);
         localStorage.setItem("auth_user", JSON.stringify(res.data.user));
         setAuthUser(res.data.user);
-        setPage("dashboard");
         setShowSplash(false);
+        navigate(resolveRedirectPath(requestedPath, normalizeRole(res.data.user?.role)), { replace: true });
       }
     }
 
@@ -142,8 +217,48 @@ function App() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
     setAuthUser(null);
-    setAuthMode("login");
+    setAccessNotice("");
+    navigate("/login", { replace: true });
   };
+
+  const handleNavigate = (page) => {
+    const targetPath = PAGE_TO_PATH[page] || getDefaultPathForRole(currentRole);
+    if (!canAccessPath(currentRole, targetPath)) {
+      setAccessNotice("Ban khong co quyen truy cap trang nay.");
+      navigate(getDefaultPathForRole(currentRole), { replace: true });
+      return;
+    }
+
+    navigate(targetPath);
+  };
+
+  const loginElement = (
+    <AuthPage
+      darkMode={darkMode}
+      mode="login"
+      onModeChange={(mode) => {
+        navigate(mode === "register" ? "/register" : "/login", { state: { from: requestedPathAfterLogin } });
+        setAuthError("");
+      }}
+      onSubmit={(payload) => handleLoginOrRegister(payload, "login", requestedPathAfterLogin)}
+      loading={authLoading}
+      error={authError}
+    />
+  );
+
+  const registerElement = (
+    <AuthPage
+      darkMode={darkMode}
+      mode="register"
+      onModeChange={(mode) => {
+        navigate(mode === "register" ? "/register" : "/login", { state: { from: requestedPathAfterLogin } });
+        setAuthError("");
+      }}
+      onSubmit={(payload) => handleLoginOrRegister(payload, "register", requestedPathAfterLogin)}
+      loading={authLoading}
+      error={authError}
+    />
+  );
 
   return (
     <>
@@ -151,55 +266,132 @@ function App() {
         <SplashScreen darkMode={darkMode} onFinish={() => setShowSplash(false)} />
       )}
 
-      {!showSplash && !authUser && (
-        <AuthPage
-          darkMode={darkMode}
-          mode={authMode}
-          onModeChange={(mode) => {
-            setAuthMode(mode);
-            setAuthError("");
-          }}
-          onSubmit={handleLoginOrRegister}
-          loading={authLoading}
-          error={authError}
-        />
-      )}
+      {!showSplash && (
+        <>
+          {accessNotice && (
+            <div style={{
+              position: "fixed",
+              top: 14,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 9999,
+              background: "rgba(239, 68, 68, 0.95)",
+              color: "#fff",
+              padding: "10px 16px",
+              borderRadius: 10,
+              fontWeight: 600,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+            }}>
+              {accessNotice}
+            </div>
+          )}
 
-      {!showSplash && authUser && page === "dashboard" && (
-        <Dashboard
-          darkMode={darkMode}
-          onNavigate={setPage}
-          onLogout={handleLogout}
-        />
-      )}
-
-      {!showSplash && authUser && page === "settings" && (
-        <Settings
-          darkMode={darkMode}
-          onDarkModeChange={setDarkMode}
-          onBack={() => setPage("dashboard")}
-        />
-      )}
-
-      {!showSplash && authUser && (page === "manual" || page === "camera") && (
-        <ManualControl
-          darkMode={darkMode}
-          onBack={() => setPage("dashboard")}
-        />
-      )}
-
-      {!showSplash && authUser && page === "connect" && (
-        <Connect
-          darkMode={darkMode}
-          onBack={() => setPage("dashboard")}
-        />
-      )}
-
-      {!showSplash && authUser && page === "map" && (
-        <MapTracking
-          darkMode={darkMode}
-          onBack={() => setPage("dashboard")}
-        />
+          <Routes>
+            <Route path="/" element={<Navigate to={authUser ? getDefaultPathForRole(currentRole) : "/login"} replace />} />
+            <Route
+              path="/login"
+              element={authUser ? <Navigate to={redirectAfterLogin} replace /> : loginElement}
+            />
+            <Route
+              path="/register"
+              element={authUser ? <Navigate to={redirectAfterLogin} replace /> : registerElement}
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/dashboard">
+                  <Dashboard
+                    darkMode={darkMode}
+                    onNavigate={handleNavigate}
+                    onLogout={handleLogout}
+                    allowedMenuIds={getAllowedDashboardMenuIds(currentRole)}
+                    authUser={authUser}
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/settings">
+                  <Settings
+                    darkMode={darkMode}
+                    onDarkModeChange={setDarkMode}
+                    onBack={() => navigate(getDefaultPathForRole(currentRole))}
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manual"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/manual">
+                  <ManualControl darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/camera"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/camera">
+                  <ManualControl darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/camera-view"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/camera-view">
+                  <CameraView darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/connect"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/connect">
+                  <Connect darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/map"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/map">
+                  <MapTracking darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/users">
+                  <UserManagement darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/events">
+                  <EventManagement darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute authUser={authUser} routePath="/profile">
+                  <UserProfile darkMode={darkMode} onBack={() => navigate(getDefaultPathForRole(currentRole))} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="*"
+              element={<Navigate to={authUser ? getDefaultPathForRole(currentRole) : "/login"} replace />}
+            />
+          </Routes>
+        </>
       )}
     </>
   );
