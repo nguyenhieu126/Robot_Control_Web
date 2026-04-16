@@ -13,7 +13,6 @@ const authRoutes          = require('./routes/authRoutes');
 const detectionRoutes     = require('./routes/detectionRoutes');
 const abandonedEventRoutes = require('./routes/abandonedEventRoutes');
 const manualCommandRoutes = require('./routes/manualCommandRoutes');
-const robotLogRoutes      = require('./routes/robotLogRoutes');
 const robotRoutes         = require('./routes/robotRoutes');
 const cameraRoutes        = require('./routes/cameraRoutes');
 const gpsRoutes           = require('./routes/gpsRoutes');
@@ -71,7 +70,6 @@ app.use('/api/auth',     authRoutes);
 app.use('/api/detections', detectionRoutes);
 app.use('/api/events',   abandonedEventRoutes);
 app.use('/api/commands', manualCommandRoutes);
-app.use('/api/logs',     robotLogRoutes);
 app.use('/api/robot',    robotRoutes);
 app.use('/api/camera',   cameraRoutes);
 app.use('/api/gps',      gpsRoutes);
@@ -115,7 +113,6 @@ app.get('/api', (req, res) => {
             detections: '/api/detections',
             events: '/api/events',
             commands: '/api/commands',
-            logs: '/api/logs',
             gps: '/api/gps',
             camera: '/api/camera',
             ingest: '/api/ingest',
