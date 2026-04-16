@@ -1,46 +1,164 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./styles/Settings.css";
+import {
+  getBrowserNotificationPermission,
+  getNotificationSettings,
+  isBrowserNotificationSupported,
+  requestBrowserNotificationPermission,
+  setNotificationEnabled,
+  setNotifyWhenFocused,
+} from "../utils/browserNotifications";
+import {
+  getAlertToastDurationMsPreference,
+  getDashboardSizePreference,
+  getNotificationClickOpensEventsPreference,
+  resetAppPreferences,
+  setAlertToastDurationMsPreference,
+  setDashboardSizePreference,
+  setNotificationClickOpensEventsPreference,
+} from "../utils/appPreferences";
 
-const INITIAL_PROFILES = [
-  { id: 1, name: "RoboArm-X1",   type: "Industrial",  time: "2 hours ago", active: true  },
-  { id: 2, name: "Workshop Arm", type: "Educational", time: "Yesterday",   active: false },
-];
+const DASHBOARD_SIZE_OPTIONS = ["SM", "MD", "LG", "XL"];
 
-/* ── Toggle: uses onToggle prop (never onChange) ── */
-function Toggle({ on, onToggle }) {
+function Toggle({ on, onToggle, disabled = false }) {
   const handleClick = () => {
-    if (typeof onToggle === "function") onToggle(!on);
+    if (!disabled) onToggle(!on);
   };
+
   return (
-    <div className={`toggle ${on ? "toggle--on" : ""}`} onClick={handleClick}>
+    <div
+      className={`toggle ${on ? "toggle--on" : ""}`}
+      onClick={handleClick}
+      style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "pointer" }}
+    >
       <div className="toggle-thumb" />
     </div>
   );
 }
 
 function Settings({ onBack, darkMode, onDarkModeChange }) {
-  const [notifications, setNotifications] = useState(true);
-  const [profiles, setProfiles]           = useState(INITIAL_PROFILES);
-  const [selectedProfile, setSelectedProfile] = useState(null);
+  const initialNotificationSettings = getNotificationSettings();
+  const notificationApiSupported = isBrowserNotificationSupported();
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(initialNotificationSettings.enabled);
+  const [notifyWhenFocused, setNotifyWhenFocusedState] = useState(initialNotificationSettings.notifyWhenFocused);
+  const [notificationPermission, setNotificationPermission] = useState(getBrowserNotificationPermission());
+  const [notificationHint, setNotificationHint] = useState("");
+  const [aboutOpen, setAboutOpen] = useState(false);
+
+  const [notificationClickOpensEvents, setNotificationClickOpensEvents] = useState(
+    getNotificationClickOpensEventsPreference()
+  );
+  const [dashboardSize, setDashboardSize] = useState(getDashboardSizePreference());
+  const [toastDurationSec, setToastDurationSec] = useState(
+    Math.round(getAlertToastDurationMsPreference() / 1000)
+  );
 
   const theme = darkMode ? "dark" : "light";
 
-  const deleteProfile = (id, e) => {
-    e.stopPropagation();
-    setProfiles(p => p.filter(pr => pr.id !== id));
-    if (selectedProfile === id) setSelectedProfile(null);
+  useEffect(() => {
+    setNotificationEnabled(notificationsEnabled);
+  }, [notificationsEnabled]);
+
+  useEffect(() => {
+    setNotifyWhenFocused(notifyWhenFocused);
+  }, [notifyWhenFocused]);
+
+  useEffect(() => {
+    setNotificationClickOpensEventsPreference(notificationClickOpensEvents);
+  }, [notificationClickOpensEvents]);
+
+  useEffect(() => {
+    setDashboardSizePreference(dashboardSize);
+  }, [dashboardSize]);
+
+  useEffect(() => {
+    setAlertToastDurationMsPreference(toastDurationSec * 1000);
+  }, [toastDurationSec]);
+
+  useEffect(() => {
+    const syncPermission = () => setNotificationPermission(getBrowserNotificationPermission());
+    syncPermission();
+
+    window.addEventListener("focus", syncPermission);
+    document.addEventListener("visibilitychange", syncPermission);
+
+    return () => {
+      window.removeEventListener("focus", syncPermission);
+      document.removeEventListener("visibilitychange", syncPermission);
+    };
+  }, []);
+
+  const permissionLabel = notificationPermission === "granted"
+    ? "Granted"
+    : notificationPermission === "denied"
+      ? "Blocked"
+      : notificationPermission === "default"
+        ? "Not requested"
+        : "Not supported";
+
+  const handleNotificationToggle = (nextValue) => {
+    setNotificationsEnabled(nextValue);
+
+    if (nextValue && notificationApiSupported && notificationPermission === "default") {
+      setNotificationHint("Notification enabled. Click Grant Permission to allow browser push alerts.");
+      return;
+    }
+
+    if (nextValue && !notificationApiSupported) {
+      setNotificationHint("This browser does not support Notification API. In-app toast fallback will be used.");
+      return;
+    }
+
+    setNotificationHint("");
   };
 
-  const addProfile = () => {
-    const name = prompt("Enter profile name:");
-    if (!name) return;
-    const type = prompt("Enter type (e.g. Industrial):") || "Custom";
-    setProfiles(p => [...p, { id: Date.now(), name, type, time: "Just now", active: false }]);
+  const handleRequestPermission = async () => {
+    const permission = await requestBrowserNotificationPermission();
+    setNotificationPermission(permission);
+
+    if (permission === "granted") {
+      setNotificationHint("Browser push notifications are enabled.");
+    } else if (permission === "denied") {
+      setNotificationHint("Permission denied. Update browser site settings if you want push notifications.");
+    } else if (permission === "unsupported") {
+      setNotificationHint("This browser does not support Notification API.");
+    }
   };
 
-  const switchProfile = (id) => {
-    setProfiles(p => p.map(pr => ({ ...pr, active: pr.id === id })));
-    setSelectedProfile(null);
+  const handleTestNotification = () => {
+    if (!notificationApiSupported) {
+      setNotificationHint("Notification API is not supported in this browser. Toast fallback is active.");
+      return;
+    }
+
+    if (notificationPermission !== "granted") {
+      setNotificationHint("Browser permission is not granted yet. Click Grant first.");
+      return;
+    }
+
+    const notification = new Notification("KaliVega Test Notification", {
+      body: "Browser push is configured successfully.",
+      tag: "kalivega-notification-test",
+      renotify: true,
+    });
+
+    notification.onclick = () => {
+      notification.close();
+      window.focus();
+    };
+
+    setNotificationHint("Test notification sent.");
+  };
+
+  const handleResetSettings = () => {
+    resetAppPreferences();
+    setNotificationsEnabled(true);
+    setNotifyWhenFocusedState(false);
+    setNotificationClickOpensEvents(true);
+    setDashboardSize("XL");
+    setToastDurationSec(5);
+    setNotificationHint("Settings reset to defaults.");
   };
 
   return (
@@ -50,12 +168,18 @@ function Settings({ onBack, darkMode, onDarkModeChange }) {
       <div className="settings-glow settings-glow--br" />
 
       <div className="settings-inner">
-
-        {/* ── HEADER ── */}
         <div className="settings-header">
           <button className="back-btn" onClick={onBack}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
           </button>
@@ -65,20 +189,19 @@ function Settings({ onBack, darkMode, onDarkModeChange }) {
           </div>
         </div>
 
-        {/* ── TWO COLUMNS ── */}
         <div className="settings-columns">
-
-          {/* ── LEFT ── */}
           <div className="settings-left">
-
-            {/* APPEARANCE */}
             <div className="settings-section-label">APPEARANCE</div>
             <div className="settings-group">
               <div className="settings-row">
-                <div className="settings-row-icon"
-                  style={{ background: darkMode
-                    ? "linear-gradient(135deg,#1a2a4a,#1a6bff)"
-                    : "linear-gradient(135deg,#f59e0b,#fbbf24)" }}>
+                <div
+                  className="settings-row-icon"
+                  style={{
+                    background: darkMode
+                      ? "linear-gradient(135deg,#1a2a4a,#1a6bff)"
+                      : "linear-gradient(135deg,#f59e0b,#fbbf24)",
+                  }}
+                >
                   {darkMode ? "🌙" : "☀️"}
                 </div>
                 <div className="settings-row-text">
@@ -91,116 +214,207 @@ function Settings({ onBack, darkMode, onDarkModeChange }) {
               </div>
             </div>
 
-            {/* NOTIFICATIONS */}
             <div className="settings-section-label">NOTIFICATIONS</div>
             <div className="settings-group">
               <div className="settings-row">
-                <div className="settings-row-icon"
-                  style={{ background: "linear-gradient(135deg,#00c9a7,#00e5c3)" }}>
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#00c9a7,#00e5c3)" }}>
                   🔔
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Push Notifications</span>
                   <span className="settings-row-sub">Alerts and updates</span>
                 </div>
-                <Toggle on={notifications} onToggle={setNotifications} />
+                <Toggle on={notificationsEnabled} onToggle={handleNotificationToggle} />
+              </div>
+
+              <div className="settings-row settings-row--bordered">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#7c3aed,#a78bfa)" }}>
+                  👁
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Notify when tab is focused</span>
+                  <span className="settings-row-sub">Send browser push even when app tab is active</span>
+                </div>
+                <Toggle
+                  on={notifyWhenFocused}
+                  onToggle={setNotifyWhenFocusedState}
+                  disabled={!notificationsEnabled}
+                />
+              </div>
+
+              <div className="settings-row settings-row--bordered">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#f97316,#fb923c)" }}>
+                  🧭
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Notification click opens Events page</span>
+                  <span className="settings-row-sub">When clicking browser notification, jump to Events</span>
+                </div>
+                <Toggle
+                  on={notificationClickOpensEvents}
+                  onToggle={setNotificationClickOpensEvents}
+                  disabled={!notificationsEnabled}
+                />
+              </div>
+
+              <div className="settings-row settings-row--bordered">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#0ea5e9,#22d3ee)" }}>
+                  🔐
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Browser Permission</span>
+                  <span className="settings-row-sub">Current status: {permissionLabel}</span>
+                </div>
+                <button
+                  type="button"
+                  className="add-btn"
+                  onClick={handleRequestPermission}
+                  disabled={!notificationApiSupported || !notificationsEnabled || notificationPermission === "granted"}
+                  title="Grant browser notification permission"
+                  style={{ minWidth: 128 }}
+                >
+                  {notificationPermission === "granted" ? "Granted" : "Grant"}
+                </button>
+              </div>
+
+              <div className="settings-row">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#22c55e,#4ade80)" }}>
+                  🧪
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Send test browser notification</span>
+                  <span className="settings-row-sub">Verify push workflow without waiting for alert event</span>
+                </div>
+                <button
+                  type="button"
+                  className="add-btn"
+                  onClick={handleTestNotification}
+                  disabled={!notificationsEnabled}
+                  style={{ minWidth: 128 }}
+                >
+                  Test
+                </button>
+              </div>
+
+              {notificationHint ? (
+                <p style={{ margin: "8px 14px 0", fontSize: "12px", opacity: 0.8 }}>{notificationHint}</p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="settings-right">
+            <div className="settings-section-label">DASHBOARD</div>
+            <div className="settings-group">
+              <div className="settings-row settings-row--bordered">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#06b6d4,#22d3ee)" }}>
+                  🧩
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Default dashboard card size</span>
+                  <span className="settings-row-sub">Applied when opening Dashboard</span>
+                </div>
+              </div>
+
+              <div className="settings-choice-wrap">
+                {DASHBOARD_SIZE_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`settings-choice-btn ${dashboardSize === option ? "settings-choice-btn--active" : ""}`}
+                    onClick={() => setDashboardSize(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+
+              <div className="settings-row settings-row--bordered">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#f59e0b,#fbbf24)" }}>
+                  ⏱
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Alert toast duration</span>
+                  <span className="settings-row-sub">{toastDurationSec}s for in-app alert toast</span>
+                </div>
+              </div>
+
+              <div className="settings-range-wrap">
+                <input
+                  type="range"
+                  min={2}
+                  max={15}
+                  step={1}
+                  value={toastDurationSec}
+                  onChange={(event) => setToastDurationSec(Number(event.target.value))}
+                />
+                <span className="settings-range-val">{toastDurationSec}s</span>
+              </div>
+
+              <div className="settings-row">
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)" }}>
+                  ♻
+                </div>
+                <div className="settings-row-text">
+                  <span className="settings-row-title">Reset interactive settings</span>
+                  <span className="settings-row-sub">Restore defaults for dashboard and notification behavior</span>
+                </div>
+                <button type="button" className="settings-action-btn" onClick={handleResetSettings}>
+                  Reset
+                </button>
               </div>
             </div>
 
-            {/* GENERAL */}
-            <div className="settings-section-label">GENERAL</div>
+            <div className="settings-section-label">ABOUT</div>
             <div className="settings-group">
-              {[
-                { icon: "📶", color: "linear-gradient(135deg,#1a6bff,#00c6ff)", label: "Network Settings",   sub: "Wi-Fi & BLE config"  },
-                { icon: "🛡",  color: "linear-gradient(135deg,#059669,#00e5c3)", label: "Privacy & Security", sub: "Permissions & data"  },
-                { icon: "ℹ",  color: "linear-gradient(135deg,#0ea5e9,#38bdf8)", label: "About",              sub: "Version info"        },
-              ].map((item, i, arr) => (
-                <div key={item.label}
-                  className={`settings-row settings-row--nav${i < arr.length - 1 ? " settings-row--bordered" : ""}`}>
-                  <div className="settings-row-icon" style={{ background: item.color }}>{item.icon}</div>
-                  <div className="settings-row-text">
-                    <span className="settings-row-title">{item.label}</span>
-                    <span className="settings-row-sub">{item.sub}</span>
-                  </div>
-                  <svg className="chevron" width="16" height="16" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
+              <div className="settings-row settings-row--nav" onClick={() => setAboutOpen(true)}>
+                <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#0ea5e9,#38bdf8)" }}>
+                  ℹ
                 </div>
-              ))}
-            </div>
-
-          </div>
-
-          {/* ── RIGHT ── */}
-          <div className="settings-right">
-
-            <div className="settings-profiles-header">
-              <span className="settings-section-label" style={{ margin: 0 }}>DEVICE PROFILES</span>
-              <button className="add-btn" onClick={addProfile}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
+                <div className="settings-row-text">
+                  <span className="settings-row-title">About & Credits</span>
+                  <span className="settings-row-sub">Project info, contributors, and technology stack</span>
+                </div>
+                <svg
+                  className="chevron"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <path d="M9 18l6-6-6-6" />
                 </svg>
-              </button>
-            </div>
-
-            <div className="settings-group">
-              {profiles.length === 0 && (
-                <p className="empty-msg">No profiles. Click + to add one.</p>
-              )}
-              {profiles.map((profile, i) => (
-                <div key={profile.id}>
-                  <div
-                    className={`profile-row${selectedProfile === profile.id ? " profile-row--expanded" : ""}`}
-                    onClick={() => setSelectedProfile(selectedProfile === profile.id ? null : profile.id)}
-                  >
-                    <div className={`profile-avatar${profile.active ? " profile-avatar--active" : ""}`}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                      </svg>
-                    </div>
-                    <div className="profile-text">
-                      <div className="profile-name-row">
-                        <span className="profile-name">{profile.name}</span>
-                        {profile.active && <span className="profile-active-badge">Active</span>}
-                      </div>
-                      <span className="profile-meta">{profile.type} · {profile.time}</span>
-                    </div>
-                    <button className="delete-btn" onClick={(e) => deleteProfile(profile.id, e)}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14H6L5 6" />
-                        <path d="M10 11v6M14 11v6M9 6V4h6v2" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {selectedProfile === profile.id && !profile.active && (
-                    <div className="profile-switch-wrap">
-                      <button className="profile-switch-btn" onClick={() => switchProfile(profile.id)}>
-                        Switch to this profile
-                      </button>
-                    </div>
-                  )}
-
-                  {i < profiles.length - 1 && <div className="profile-divider" />}
-                </div>
-              ))}
+              </div>
             </div>
 
             <div className="version-card">
               <span className="version-title">KaliVega Controller</span>
               <span className="version-num">Version 1.0.0</span>
             </div>
-
           </div>
         </div>
       </div>
+
+      {aboutOpen ? (
+        <div className="settings-modal-backdrop" onClick={() => setAboutOpen(false)}>
+          <div className="settings-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>KaliVega Controller - Credits</h3>
+            <p>Version 1.0.0</p>
+            <ul>
+              <li>Frontend: React + React Router</li>
+              <li>Backend: Node.js + Express + WebSocket</li>
+              <li>Database: PostgreSQL</li>
+              <li>Realtime: ws dashboard + robot channels</li>
+            </ul>
+            <p>Team: KaliVega Development</p>
+            <button type="button" className="settings-action-btn" onClick={() => setAboutOpen(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

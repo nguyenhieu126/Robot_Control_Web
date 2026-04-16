@@ -1,7 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWsDashboardUrl } from '../utils/runtimeEndpoints';
 
-const WS_URL = getWsDashboardUrl();
+function buildWsUrlWithToken() {
+  const baseUrl = getWsDashboardUrl();
+
+  if (typeof window === 'undefined') {
+    return baseUrl;
+  }
+
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    return baseUrl;
+  }
+
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set('token', token);
+    return url.toString();
+  } catch {
+    const sep = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${sep}token=${encodeURIComponent(token)}`;
+  }
+}
 
 const DEFAULT_STATUS = {
   connected: false,
@@ -30,7 +50,7 @@ export function useRobotWS() {
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
     try {
-      const ws = new WebSocket(WS_URL);
+      const ws = new WebSocket(buildWsUrlWithToken());
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -69,6 +89,8 @@ export function useRobotWS() {
             }
 
             setLatestAlert({ ...msg.data });
+          } else if (msg.type === 'DIRECT_COMMAND_ACK' && msg.data?.success === false) {
+            console.warn('[WS] Direct command rejected:', msg.data?.error || 'Unknown error');
           }
         } catch {}
       };
