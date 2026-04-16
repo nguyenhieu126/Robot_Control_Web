@@ -21,9 +21,11 @@ const DEFAULT_STATUS = {
 export function useRobotWS() {
   const [robotStatus, setRobotStatus] = useState(DEFAULT_STATUS);
   const [wsConnected, setWsConnected] = useState(false);
+  const [latestAlert, setLatestAlert] = useState(null);
   const wsRef         = useRef(null);
   const reconnectRef  = useRef(null);
   const mountedRef    = useRef(true);
+  const seenAlertIdsRef = useRef(new Set());
 
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
@@ -56,6 +58,17 @@ export function useRobotWS() {
               ...prev,
               robotConnected: msg.data?.connected ?? false,
             }));
+          } else if (msg.type === 'ABANDONED_ALERT' && msg.data) {
+            const eventId = msg.data?.eventId;
+            if (eventId !== undefined && eventId !== null) {
+              const eventKey = String(eventId);
+              if (seenAlertIdsRef.current.has(eventKey)) {
+                return;
+              }
+              seenAlertIdsRef.current.add(eventKey);
+            }
+
+            setLatestAlert({ ...msg.data });
           }
         } catch {}
       };
@@ -84,5 +97,5 @@ export function useRobotWS() {
     }
   }, []);
 
-  return { robotStatus, wsConnected, sendDirect };
+  return { robotStatus, wsConnected, latestAlert, sendDirect };
 }

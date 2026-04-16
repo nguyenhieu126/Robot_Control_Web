@@ -1,4 +1,5 @@
 const http    = require('http');
+const path    = require('path');
 const express = require('express');
 const cors    = require('cors');
 require('dotenv').config();
@@ -16,6 +17,7 @@ const robotLogRoutes      = require('./routes/robotLogRoutes');
 const robotRoutes         = require('./routes/robotRoutes');
 const cameraRoutes        = require('./routes/cameraRoutes');
 const gpsRoutes           = require('./routes/gpsRoutes');
+const ingestRoutes        = require('./routes/ingestRoutes');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +49,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Request logger: in console for every incoming HTTP request
 app.use((req, res, next) => {
@@ -72,6 +75,7 @@ app.use('/api/logs',     robotLogRoutes);
 app.use('/api/robot',    robotRoutes);
 app.use('/api/camera',   cameraRoutes);
 app.use('/api/gps',      gpsRoutes);
+app.use('/api/ingest',   ingestRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -114,6 +118,7 @@ app.get('/api', (req, res) => {
             logs: '/api/logs',
             gps: '/api/gps',
             camera: '/api/camera',
+            ingest: '/api/ingest',
             health: '/api/health',
             dbHealth: '/api/db-health'
         }

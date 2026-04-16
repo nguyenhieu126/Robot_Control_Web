@@ -4,6 +4,7 @@ import Table from "./common/Table";
 import Modal from "./common/Modal";
 import Toast from "./common/Toast";
 import EventDetail from "./EventDetail";
+import { resolveMediaUrl } from "../utils/mediaUrl";
 import "./styles/AdminPages.css";
 
 const PAGE_SIZE = 10;
@@ -133,7 +134,7 @@ export default function EventManagement({ onBack, darkMode = true }) {
       key: "snapshot",
       label: "Snapshot",
       render: (row) => {
-        const image = row.snapshot_path || row.detection_image_path;
+        const image = resolveMediaUrl(row.snapshot_path || row.detection_image_path);
         return image ? <img src={image} alt="snapshot" className="admin-thumb" /> : "--";
       },
     },

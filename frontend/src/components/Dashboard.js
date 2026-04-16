@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRobotWS } from "../hooks/useRobotWS";
+import Toast from "./common/Toast";
 import "./styles/Dashboard.css";
 
 const SIZES = ["SM", "MD", "LG", "XL"];
@@ -72,8 +73,9 @@ const MENU_ITEMS = [
 
 function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [], authUser = null }) {
   const [size, setSize] = useState("XL");
+  const [toast, setToast] = useState({ type: "info", message: "" });
   const theme = darkMode ? "dark" : "light";
-  const { robotStatus, wsConnected } = useRobotWS();
+  const { robotStatus, wsConnected, latestAlert } = useRobotWS();
   const hasMenuRestrictions = Array.isArray(allowedMenuIds) && allowedMenuIds.length > 0;
   const canManageUsers = !hasMenuRestrictions || allowedMenuIds.includes("users");
   const canEditProfile = !hasMenuRestrictions || allowedMenuIds.includes("profile");
@@ -110,6 +112,15 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
           : "Very weak";
 
   const protocolLabel = wsConnected ? "WebSocket" : "Offline";
+
+  useEffect(() => {
+    if (!latestAlert) return;
+    const objectType = latestAlert.objectType || "khong ro";
+    setToast({
+      type: "warning",
+      message: `Cảnh báo: Phát hiện đồ vật bị bỏ quên (${objectType})`,
+    });
+  }, [latestAlert]);
 
   const handleCardClick = (id) => {
     if (id === "settings" && onNavigate) onNavigate("settings");
@@ -238,6 +249,13 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
         </div>
 
       </div>
+
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        duration={5000}
+        onClose={() => setToast({ type: "info", message: "" })}
+      />
     </div>
   );
 }

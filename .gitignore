@@ -1,6 +1,7 @@
 .DS_STORE
 .md
 .env
+.backend/uploads/
 node_modules
 scripts/flow/*/.flowconfig
 .flowconfig

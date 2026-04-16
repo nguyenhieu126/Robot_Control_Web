@@ -326,6 +326,15 @@ function getRobotStatus() {
   return { ...robotStatus, robotConnected: isRobotConnected() };
 }
 
+function sendDashboardEvent(payload) {
+  if (!payload || typeof payload !== 'object' || !payload.type) {
+    return false;
+  }
+
+  const deliveredCount = _broadcastDashboard(payload);
+  return deliveredCount > 0;
+}
+
 // ── Helpers ────────────────────────────────────────────────────
 function _send(ws, payload) {
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -335,9 +344,15 @@ function _send(ws, payload) {
 
 function _broadcastDashboard(payload) {
   const str = JSON.stringify(payload);
+  let deliveredCount = 0;
   dashboardClients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) client.send(str);
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(str);
+      deliveredCount += 1;
+    }
   });
+
+  return deliveredCount;
 }
 
 function _normalizeGpsData(rawGps) {
@@ -450,6 +465,7 @@ module.exports = {
   init,
   sendCommandToRobot,
   sendModeChange,
+  sendDashboardEvent,
   isRobotConnected,
   getRobotStatus,
   _test: {
