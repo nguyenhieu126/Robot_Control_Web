@@ -6,12 +6,35 @@ const WS_URL = getWsDashboardUrl();
 
 const STATE_NAMES = {
   "-1": "Unknown",
-  0:    "Idle",
-  1:    "Moving",
-  2:    "Obstacle Detected",
-  3:    "Emergency Stop",
-  4:    "Calibrating",
+  0: "INIT",
+  1: "NORMAL",
+  2: "SLOW",
+  3: "AVOID_LEFT",
+  4: "AVOID_RIGHT",
+  5: "TURN_LEFT",
+  6: "TURN_RIGHT",
+  7: "BACKING",
+  8: "STOP",
+  9: "EMERGENCY",
+  10: "MANUAL",
+  11: "ESCAPE",
 };
+
+function resolveStateLabel(state, stateCode) {
+  if (typeof state === "string" && state.length > 0) {
+    return state;
+  }
+
+  const code = Number.isInteger(Number(stateCode))
+    ? Number(stateCode)
+    : Number(state);
+
+  if (Number.isInteger(code)) {
+    return STATE_NAMES[code] ?? `STATE_${code}`;
+  }
+
+  return "—";
+}
 
 function RssiBar({ rssi }) {
   if (rssi == null) return <span className="cn-val-dim">—</span>;
@@ -135,7 +158,10 @@ export default function Connect({ onBack, darkMode = true }) {
             case "STATUS":
               setRobotStatus(msg.data);
               setRobotConnected(msg.data?.robotConnected ?? false);
-              addLog(`Status update: mode=${msg.data?.mode}, state=${msg.data?.state}`, "info");
+              addLog(
+                `Status update: mode=${msg.data?.mode}, state=${resolveStateLabel(msg.data?.state, msg.data?.stateCode)}`,
+                "info"
+              );
               break;
             case "ROBOT_CONNECTED":
               setRobotConnected(msg.data?.connected ?? false);
@@ -337,7 +363,7 @@ export default function Connect({ onBack, darkMode = true }) {
                   </div>
                   <div className="cn-stat">
                     <label>State</label>
-                    <span>{STATE_NAMES[robotStatus.state] ?? robotStatus.state ?? "—"}</span>
+                    <span>{resolveStateLabel(robotStatus.state, robotStatus.stateCode)}</span>
                   </div>
                   <div className="cn-stat">
                     <label>Signal</label>

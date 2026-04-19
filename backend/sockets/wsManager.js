@@ -31,7 +31,8 @@ let robotStatus = {
   device:    null,
   firmware:  null,
   mode:      'UNKNOWN',
-  state:     -1,
+  state:     'UNKNOWN',
+  stateCode: -1,
   rssi:      null,
   uptime:    0,
   lastSeen:  null,
@@ -51,6 +52,60 @@ let configCache = {
 
 let pendingConfigUpdate = null;
 let pendingConfigGet = null;
+
+const STATE_NAMES_BY_CODE = Object.freeze({
+  '-1': 'UNKNOWN',
+  0: 'INIT',
+  1: 'NORMAL',
+  2: 'SLOW',
+  3: 'AVOID_LEFT',
+  4: 'AVOID_RIGHT',
+  5: 'TURN_LEFT',
+  6: 'TURN_RIGHT',
+  7: 'BACKING',
+  8: 'STOP',
+  9: 'EMERGENCY',
+  10: 'MANUAL',
+  11: 'ESCAPE',
+});
+
+const STATE_CODE_BY_NAME = Object.freeze(
+  Object.entries(STATE_NAMES_BY_CODE).reduce((acc, [code, name]) => {
+    acc[String(name).toUpperCase()] = Number(code);
+    return acc;
+  }, {})
+);
+
+function _normalizeRobotState(rawState, rawStateCode, fallbackState = 'UNKNOWN', fallbackCode = -1) {
+  const fallbackName = typeof fallbackState === 'string' ? fallbackState : String(fallbackState ?? 'UNKNOWN');
+  const baseCode = Number.isInteger(Number(fallbackCode)) ? Number(fallbackCode) : -1;
+
+  if (typeof rawState === 'string' && rawState.length > 0) {
+    const name = rawState.toUpperCase();
+    const code = Number.isInteger(Number(rawStateCode))
+      ? Number(rawStateCode)
+      : (STATE_CODE_BY_NAME[name] ?? baseCode);
+    return { stateName: name, stateCode: code };
+  }
+
+  if (Number.isInteger(Number(rawState))) {
+    const code = Number(rawState);
+    return {
+      stateName: STATE_NAMES_BY_CODE[code] || `STATE_${code}`,
+      stateCode: code,
+    };
+  }
+
+  if (Number.isInteger(Number(rawStateCode))) {
+    const code = Number(rawStateCode);
+    return {
+      stateName: STATE_NAMES_BY_CODE[code] || `STATE_${code}`,
+      stateCode: code,
+    };
+  }
+
+  return { stateName: fallbackName, stateCode: baseCode };
+}
 
 function _normalizeIsoTimestamp(rawTs) {
   const nowIso = new Date().toISOString();
@@ -271,10 +326,17 @@ async function _handleRobotMsg(ws, msg) {
     case 'STATUS':
       if (data) {
         const normalizedGps = _normalizeGpsData(data.gps);
+        const normalizedState = _normalizeRobotState(
+          data.state,
+          data.stateCode,
+          robotStatus.state,
+          robotStatus.stateCode
+        );
         robotStatus = {
           ...robotStatus,
           mode:     data.mode    ?? robotStatus.mode,
-          state:    data.state   ?? robotStatus.state,
+          state:    normalizedState.stateName,
+          stateCode: normalizedState.stateCode,
           rssi:     data.rssi    ?? robotStatus.rssi,
           uptime:   data.uptime  ?? robotStatus.uptime,
           front:    data.front   ?? robotStatus.front,

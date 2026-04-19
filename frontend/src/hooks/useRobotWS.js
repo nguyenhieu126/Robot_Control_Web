@@ -26,7 +26,8 @@ function buildWsUrlWithToken() {
 const DEFAULT_STATUS = {
   connected: false,
   mode: 'UNKNOWN',
-  state: -1,
+  state: 'UNKNOWN',
+  stateCode: -1,
   rssi: null,
   uptime: 0,
   lastSeen: null,

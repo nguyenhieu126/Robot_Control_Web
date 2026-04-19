@@ -13,6 +13,20 @@ const STATE_NAMES = [
   'TURN_L','TURN_R','BACKING','STOP','EMERGENCY','MANUAL','ESCAPE',
 ];
 
+function resolveStateName(state, stateCode) {
+  if (typeof state === 'string' && state.length > 0) return state;
+
+  const code = Number.isInteger(Number(stateCode))
+    ? Number(stateCode)
+    : Number(state);
+
+  if (Number.isInteger(code) && STATE_NAMES[code]) {
+    return STATE_NAMES[code];
+  }
+
+  return `ST(${state ?? stateCode ?? 'UNKNOWN'})`;
+}
+
 // ── Slider with fill track ───────────────────────────────────────
 function RangeSlider({ label, sub, min, max, step, value, unit, onChange, onCommit }) {
   const pct = ((value - min) / (max - min) * 100).toFixed(1);
@@ -93,7 +107,7 @@ function ManualControl({ onBack, darkMode = true }) {
 
   const isManual    = robotStatus.mode === 'MANUAL';
   const robotOnline = robotStatus.robotConnected;
-  const stateName   = STATE_NAMES[robotStatus.state] ?? `ST(${robotStatus.state})`;
+  const stateName   = resolveStateName(robotStatus.state, robotStatus.stateCode);
 
   // ── Joystick send loop 150 ms ──
   useEffect(() => {
