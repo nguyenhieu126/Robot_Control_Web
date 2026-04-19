@@ -166,8 +166,6 @@ router.get('/config', authMiddleware, adminMiddleware, async (req, res) => {
         return res.json({
             success: true,
             data: result.data,
-            cached: Boolean(result.cached),
-            stale: Boolean(result.stale),
         });
     } catch (error) {
         console.error('[API] GET /config error:', error);

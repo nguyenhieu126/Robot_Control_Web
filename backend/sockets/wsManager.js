@@ -52,6 +52,24 @@ let configCache = {
 let pendingConfigUpdate = null;
 let pendingConfigGet = null;
 
+function _normalizeIsoTimestamp(rawTs) {
+  const nowIso = new Date().toISOString();
+
+  if (typeof rawTs === 'string' && rawTs.length > 0) {
+    const parsed = Date.parse(rawTs);
+    if (!Number.isNaN(parsed) && parsed >= 946684800000) {
+      return new Date(parsed).toISOString();
+    }
+    return nowIso;
+  }
+
+  if (typeof rawTs === 'number' && Number.isFinite(rawTs) && rawTs >= 946684800000) {
+    return new Date(rawTs).toISOString();
+  }
+
+  return nowIso;
+}
+
 function _normalizeRole(role) {
   return role === 'admin' ? 'admin' : 'user';
 }
@@ -307,11 +325,12 @@ async function _handleRobotMsg(ws, msg) {
     }
 
     case 'CONFIG_UPDATE_ACK': {
+      const normalizedTs = _normalizeIsoTimestamp(data?.timestamp);
       if (data && typeof data === 'object' && data.appliedConfig && typeof data.appliedConfig === 'object') {
         configCache = {
           data: { ...data.appliedConfig },
           source: data.source || 'runtime',
-          timestamp: data.timestamp || new Date().toISOString(),
+          timestamp: normalizedTs,
           cachedAt: Date.now(),
         };
       }
@@ -334,13 +353,34 @@ async function _handleRobotMsg(ws, msg) {
 
     case 'CONFIG_CURRENT': {
       if (data && typeof data === 'object') {
-        const { source = 'runtime', timestamp = new Date().toISOString(), ...cfg } = data;
+        const { source = 'runtime', timestamp, ...cfg } = data;
+        const normalizedData = {
+          ...cfg,
+          source,
+          timestamp: _normalizeIsoTimestamp(timestamp),
+        };
+
         configCache = {
           data: { ...cfg },
-          source,
-          timestamp,
+          source: normalizedData.source,
+          timestamp: normalizedData.timestamp,
           cachedAt: Date.now(),
         };
+
+        if (pendingConfigGet) {
+          const { resolve, timeoutId } = pendingConfigGet;
+          clearTimeout(timeoutId);
+          pendingConfigGet = null;
+          resolve({
+            success: true,
+            status: 200,
+            cached: false,
+            data: normalizedData,
+          });
+        }
+
+        _broadcastDashboard({ type: 'CONFIG_CURRENT', data: normalizedData });
+        break;
       }
 
       if (pendingConfigGet) {

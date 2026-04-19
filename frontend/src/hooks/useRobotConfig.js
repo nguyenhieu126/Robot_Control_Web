@@ -22,7 +22,6 @@ export const DEFAULT_ROBOT_CONFIG = Object.freeze({
 });
 
 function normalizeConfigData(raw) {
-  const source = raw?.source || 'unknown';
   const timestamp = raw?.timestamp || null;
 
   const config = { ...DEFAULT_ROBOT_CONFIG };
@@ -33,7 +32,7 @@ function normalizeConfigData(raw) {
     }
   });
 
-  return { config, source, timestamp };
+  return { config, timestamp };
 }
 
 export function useRobotConfig({ enabled = true } = {}) {
@@ -44,9 +43,7 @@ export function useRobotConfig({ enabled = true } = {}) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
-  const [source, setSource] = useState('unknown');
   const [timestamp, setTimestamp] = useState(null);
-  const [cached, setCached] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     if (!enabled) return { success: false, error: 'disabled' };
@@ -64,10 +61,8 @@ export function useRobotConfig({ enabled = true } = {}) {
 
     const normalized = normalizeConfigData(res.data);
     setConfig(normalized.config);
-    setSource(normalized.source);
     setTimestamp(normalized.timestamp);
-    setCached(Boolean(res.cached));
-    setStatus(res.stale ? 'Loaded cached config (ESP32 offline)' : 'Config loaded');
+    setStatus('Config loaded');
 
     return { success: true, data: normalized.config };
   }, [enabled, getRobotConfig]);
@@ -90,9 +85,7 @@ export function useRobotConfig({ enabled = true } = {}) {
     const ackConfig = res?.data?.ack?.appliedConfig || nextConfig;
     const normalized = normalizeConfigData(ackConfig);
     setConfig(normalized.config);
-    setSource(res?.data?.ack?.source || 'nvs');
     setTimestamp(new Date().toISOString());
-    setCached(false);
     setStatus('Config saved to ESP32 flash');
     return { success: true, data: normalized.config };
   }, [enabled, updateRobotConfig]);
@@ -115,9 +108,7 @@ export function useRobotConfig({ enabled = true } = {}) {
     const ackConfig = res?.data?.ack?.appliedConfig || DEFAULT_ROBOT_CONFIG;
     const normalized = normalizeConfigData(ackConfig);
     setConfig(normalized.config);
-    setSource('default');
     setTimestamp(new Date().toISOString());
-    setCached(false);
     setStatus('Config reset to defaults');
     return { success: true, data: normalized.config };
   }, [enabled, resetRobotConfig]);
@@ -135,9 +126,7 @@ export function useRobotConfig({ enabled = true } = {}) {
     saving,
     error,
     status,
-    source,
     timestamp,
-    cached,
     fetchConfig,
     updateConfig,
     resetToDefaults,
@@ -147,9 +136,7 @@ export function useRobotConfig({ enabled = true } = {}) {
     saving,
     error,
     status,
-    source,
     timestamp,
-    cached,
     fetchConfig,
     updateConfig,
     resetToDefaults,

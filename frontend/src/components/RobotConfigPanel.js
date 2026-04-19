@@ -55,9 +55,7 @@ function RobotConfigPanel({ isAdmin = false }) {
     saving,
     error,
     status,
-    source,
     timestamp,
-    cached,
     setConfig,
     fetchConfig,
     updateConfig,
@@ -125,8 +123,6 @@ function RobotConfigPanel({ isAdmin = false }) {
       </div>
 
       <div className="robot-config-meta">
-        <span>Source: {source || 'unknown'}</span>
-        <span>{cached ? 'Using cache' : 'Live/Recent'}</span>
         <span>{timestamp ? `Updated: ${new Date(timestamp).toLocaleString()}` : 'Updated: -'}</span>
       </div>
 
