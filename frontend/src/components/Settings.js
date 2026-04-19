@@ -17,6 +17,7 @@ import {
   setDashboardSizePreference,
   setNotificationClickOpensEventsPreference,
 } from "../utils/appPreferences";
+import RobotConfigPanel from "./RobotConfigPanel";
 
 const DASHBOARD_SIZE_OPTIONS = ["SM", "MD", "LG", "XL"];
 
@@ -36,7 +37,7 @@ function Toggle({ on, onToggle, disabled = false }) {
   );
 }
 
-function Settings({ onBack, darkMode, onDarkModeChange }) {
+function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
   const initialNotificationSettings = getNotificationSettings();
   const notificationApiSupported = isBrowserNotificationSupported();
 
@@ -55,6 +56,7 @@ function Settings({ onBack, darkMode, onDarkModeChange }) {
   );
 
   const theme = darkMode ? "dark" : "light";
+  const isAdmin = authUser?.role === "admin";
 
   useEffect(() => {
     setNotificationEnabled(notificationsEnabled);
@@ -363,6 +365,9 @@ function Settings({ onBack, darkMode, onDarkModeChange }) {
                 </button>
               </div>
             </div>
+
+            <div className="settings-section-label">ROBOT CONFIGURATION</div>
+            <RobotConfigPanel isAdmin={isAdmin} />
 
             <div className="settings-section-label">ABOUT</div>
             <div className="settings-group">
