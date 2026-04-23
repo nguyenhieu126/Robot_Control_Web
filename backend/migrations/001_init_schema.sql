@@ -68,17 +68,6 @@ CREATE TABLE manual_commands (
 CREATE INDEX idx_manual_commands_user_id ON manual_commands(user_id);
 CREATE INDEX idx_manual_commands_created_at ON manual_commands(created_at);
 
--- 5️⃣ BẢNG ROBOT_LOGS (Log hoạt động robot)
-CREATE TABLE robot_logs (
-    id SERIAL PRIMARY KEY,
-    event VARCHAR(50) NOT NULL,
-    message TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_robot_logs_event ON robot_logs(event);
-CREATE INDEX idx_robot_logs_created_at ON robot_logs(created_at);
-
 -- ===================================
 -- SEED DATA (Dữ liệu mẫu)
 -- ===================================
@@ -95,10 +84,3 @@ INSERT INTO detections (object_type, confidence, image_path, location_x, locatio
 INSERT INTO abandoned_events (detection_id, status, confirmed_by, first_seen, last_seen, duration, snapshot_path, note) VALUES
     (1, 'pending', NULL, NOW() - INTERVAL '5 minutes', NOW(), 300, '/snapshots/event_001.jpg', NULL),
     (2, 'confirmed', NULL, NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '1 minute', 540, '/snapshots/event_002.jpg', 'Bag found near entrance');
-
--- Tạo log mẫu
-INSERT INTO robot_logs (event, message) VALUES
-    ('SYSTEM_START', 'Robot system started'),
-    ('AUTO_MODE', 'Autonomous patrol enabled'),
-    ('OBJECT_DETECTED', 'Backpack detected at 150, 200'),
-    ('ABANDONED_OBJECT', 'Backpack stationary for 300 seconds');

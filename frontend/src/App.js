@@ -318,6 +318,7 @@ function App() {
                     darkMode={darkMode}
                     onDarkModeChange={setDarkMode}
                     onBack={() => navigate(getDefaultPathForRole(currentRole))}
+                    authUser={authUser}
                   />
                 </ProtectedRoute>
               }

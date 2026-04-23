@@ -73,22 +73,26 @@ class AbandonedEventModel {
 
     // Cập nhật status
     static async updateStatus(id, status, confirmedBy = null, note = null) {
-        const query = confirmedBy
-            ? `UPDATE abandoned_events
-               SET status = $1,
-                   confirmed_by = $2,
-                   note = $3,
-                   resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END
-               WHERE id = $4
-               RETURNING *`
-            : `UPDATE abandoned_events
-               SET status = $1,
-                   note = $3,
-                   resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END
-               WHERE id = $4
+        const hasConfirmedBy = confirmedBy !== null && confirmedBy !== undefined && String(confirmedBy).trim() !== '';
+        const updates = [
+            'status = $1::VARCHAR',
+            'note = $2',
+            "resolved_at = CASE WHEN $1::VARCHAR = 'resolved' THEN NOW() ELSE resolved_at END"
+        ];
+        const params = [status, note];
+
+        if (hasConfirmedBy) {
+            params.push(Number(confirmedBy));
+            updates.push(`confirmed_by = $${params.length}`);
+        }
+
+        params.push(Number(id));
+
+        const query = `UPDATE abandoned_events
+               SET ${updates.join(',\n                   ')}
+               WHERE id = $${params.length}
                RETURNING *`;
 
-        const params = confirmedBy ? [status, confirmedBy, note, id] : [status, null, note, id];
         const result = await pool.query(query, params);
         return result.rows[0];
     }

@@ -194,6 +194,15 @@ export function useRobotApi() {
     [_get]
   );
 
+  const getRobotConfig = useCallback(() => _get('/api/robot/config'), [_get]);
+
+  const updateRobotConfig = useCallback(
+    (config) => _post('/api/robot/config', config),
+    [_post]
+  );
+
+  const resetRobotConfig = useCallback(() => _post('/api/robot/config/reset', {}), [_post]);
+
   return {
     sendCommand,
     setMode,
@@ -216,5 +225,8 @@ export function useRobotApi() {
     updateEventStatus,
     deleteEvent,
     getEventStats,
+    getRobotConfig,
+    updateRobotConfig,
+    resetRobotConfig,
   };
 }

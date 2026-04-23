@@ -1,8 +1,21 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRobotWS } from "../hooks/useRobotWS";
+import Toast from "./common/Toast";
+import {
+  getBrowserNotificationPermission,
+  getNotificationSettings,
+  isBrowserNotificationSupported,
+} from "../utils/browserNotifications";
+import {
+  getAlertToastDurationMsPreference,
+  getDashboardSizePreference,
+  getNotificationClickOpensEventsPreference,
+  setDashboardSizePreference,
+} from "../utils/appPreferences";
 import "./styles/Dashboard.css";
 
 const SIZES = ["SM", "MD", "LG", "XL"];
+const NOTIFICATION_COOLDOWN_MS = 30000;
 
 const MENU_ITEMS = [
   {
@@ -71,9 +84,14 @@ const MENU_ITEMS = [
 ];
 
 function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [], authUser = null }) {
-  const [size, setSize] = useState("XL");
+  const [size, setSize] = useState(() => getDashboardSizePreference());
+  const [alertToastDurationMs] = useState(() => getAlertToastDurationMsPreference());
+  const [notificationClickOpensEvents] = useState(() => getNotificationClickOpensEventsPreference());
+  const [toast, setToast] = useState({ type: "info", message: "" });
+  const notifiedEventRef = useRef(new Map());
+  const permissionHintShownRef = useRef({ unsupported: false, default: false, denied: false });
   const theme = darkMode ? "dark" : "light";
-  const { robotStatus, wsConnected } = useRobotWS();
+  const { robotStatus, wsConnected, latestAlert } = useRobotWS();
   const hasMenuRestrictions = Array.isArray(allowedMenuIds) && allowedMenuIds.length > 0;
   const canManageUsers = !hasMenuRestrictions || allowedMenuIds.includes("users");
   const canEditProfile = !hasMenuRestrictions || allowedMenuIds.includes("profile");
@@ -110,6 +128,100 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
           : "Very weak";
 
   const protocolLabel = wsConnected ? "WebSocket" : "Offline";
+
+  useEffect(() => {
+    setDashboardSizePreference(size);
+  }, [size]);
+
+  useEffect(() => {
+    if (!latestAlert) return;
+
+    const objectType = latestAlert.objectType || "khong ro";
+    setToast({
+      type: "warning",
+      message: `Cảnh báo: Phát hiện đồ vật bị bỏ quên (${objectType})`,
+    });
+
+    const settings = getNotificationSettings();
+    if (!settings.enabled) {
+      return;
+    }
+
+    const notificationSupported = isBrowserNotificationSupported();
+    if (!notificationSupported) {
+      if (!permissionHintShownRef.current.unsupported) {
+        permissionHintShownRef.current.unsupported = true;
+        setToast({
+          type: "info",
+          message: "Browser không hỗ trợ push Notification. Đang dùng toast trong app.",
+        });
+      }
+      return;
+    }
+
+    const permission = getBrowserNotificationPermission();
+    if (permission !== "granted") {
+      if (permission === "default" && !permissionHintShownRef.current.default) {
+        permissionHintShownRef.current.default = true;
+        setToast({
+          type: "info",
+          message: "Chưa cấp quyền Notification. Vào Settings để bấm Grant Permission.",
+        });
+      }
+
+      if (permission === "denied" && !permissionHintShownRef.current.denied) {
+        permissionHintShownRef.current.denied = true;
+        setToast({
+          type: "error",
+          message: "Notification đang bị chặn bởi trình duyệt. Hãy mở quyền trong browser settings.",
+        });
+      }
+      return;
+    }
+
+    const tabFocused =
+      typeof document !== "undefined"
+      && document.visibilityState === "visible"
+      && document.hasFocus();
+
+    if (tabFocused && !settings.notifyWhenFocused) {
+      return;
+    }
+
+    const eventId = latestAlert.eventId ?? latestAlert.id ?? null;
+    const eventKey = eventId !== null && eventId !== undefined
+      ? `event:${eventId}`
+      : `fallback:${objectType}:${latestAlert.createdAt || "unknown"}`;
+    const now = Date.now();
+    const lastNotifiedAt = notifiedEventRef.current.get(eventKey) || 0;
+    if (now - lastNotifiedAt < NOTIFICATION_COOLDOWN_MS) {
+      return;
+    }
+
+    notifiedEventRef.current.set(eventKey, now);
+
+    try {
+      const notification = new Notification("Abandoned Item Alert", {
+        body: `Detected: ${objectType}`,
+        tag: `abandoned-${eventKey}`,
+        renotify: false,
+      });
+
+      notification.onclick = () => {
+        notification.close();
+        window.focus();
+        if (notificationClickOpensEvents && typeof onNavigate === "function") {
+          onNavigate("events");
+        }
+      };
+    } catch (error) {
+      setToast({
+        type: "error",
+        message: "Không thể hiển thị Notification của trình duyệt. Đang dùng toast trong app.",
+      });
+      console.error("[Notification] Failed to show browser notification:", error);
+    }
+  }, [latestAlert, notificationClickOpensEvents, onNavigate]);
 
   const handleCardClick = (id) => {
     if (id === "settings" && onNavigate) onNavigate("settings");
@@ -238,6 +350,13 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
         </div>
 
       </div>
+
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        duration={alertToastDurationMs}
+        onClose={() => setToast({ type: "info", message: "" })}
+      />
     </div>
   );
 }

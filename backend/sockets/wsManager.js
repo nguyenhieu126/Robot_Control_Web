@@ -14,6 +14,8 @@ const jwt = require('jsonwebtoken');
 const RobotGpsLogModel = require('../models/robotGpsLogModel');
 
 const GPS_ROBOT_ID = process.env.GPS_ROBOT_ID || 'kali-vega-01';
+const CONFIG_REQUEST_TIMEOUT_MS = 5000;
+const CONFIG_CACHE_TTL_MS = 8000;
 
 // ── State ──────────────────────────────────────────────────────
 let robotWss     = null;
@@ -29,7 +31,8 @@ let robotStatus = {
   device:    null,
   firmware:  null,
   mode:      'UNKNOWN',
-  state:     -1,
+  state:     'UNKNOWN',
+  stateCode: -1,
   rssi:      null,
   uptime:    0,
   lastSeen:  null,
@@ -39,6 +42,88 @@ let robotStatus = {
   back:      null,
   gps:       null,
 };
+
+let configCache = {
+  data: null,
+  source: null,
+  timestamp: null,
+  cachedAt: 0,
+};
+
+let pendingConfigUpdate = null;
+let pendingConfigGet = null;
+
+const STATE_NAMES_BY_CODE = Object.freeze({
+  '-1': 'UNKNOWN',
+  0: 'INIT',
+  1: 'NORMAL',
+  2: 'SLOW',
+  3: 'AVOID_LEFT',
+  4: 'AVOID_RIGHT',
+  5: 'TURN_LEFT',
+  6: 'TURN_RIGHT',
+  7: 'BACKING',
+  8: 'STOP',
+  9: 'EMERGENCY',
+  10: 'MANUAL',
+  11: 'ESCAPE',
+});
+
+const STATE_CODE_BY_NAME = Object.freeze(
+  Object.entries(STATE_NAMES_BY_CODE).reduce((acc, [code, name]) => {
+    acc[String(name).toUpperCase()] = Number(code);
+    return acc;
+  }, {})
+);
+
+function _normalizeRobotState(rawState, rawStateCode, fallbackState = 'UNKNOWN', fallbackCode = -1) {
+  const fallbackName = typeof fallbackState === 'string' ? fallbackState : String(fallbackState ?? 'UNKNOWN');
+  const baseCode = Number.isInteger(Number(fallbackCode)) ? Number(fallbackCode) : -1;
+
+  if (typeof rawState === 'string' && rawState.length > 0) {
+    const name = rawState.toUpperCase();
+    const code = Number.isInteger(Number(rawStateCode))
+      ? Number(rawStateCode)
+      : (STATE_CODE_BY_NAME[name] ?? baseCode);
+    return { stateName: name, stateCode: code };
+  }
+
+  if (Number.isInteger(Number(rawState))) {
+    const code = Number(rawState);
+    return {
+      stateName: STATE_NAMES_BY_CODE[code] || `STATE_${code}`,
+      stateCode: code,
+    };
+  }
+
+  if (Number.isInteger(Number(rawStateCode))) {
+    const code = Number(rawStateCode);
+    return {
+      stateName: STATE_NAMES_BY_CODE[code] || `STATE_${code}`,
+      stateCode: code,
+    };
+  }
+
+  return { stateName: fallbackName, stateCode: baseCode };
+}
+
+function _normalizeIsoTimestamp(rawTs) {
+  const nowIso = new Date().toISOString();
+
+  if (typeof rawTs === 'string' && rawTs.length > 0) {
+    const parsed = Date.parse(rawTs);
+    if (!Number.isNaN(parsed) && parsed >= 946684800000) {
+      return new Date(parsed).toISOString();
+    }
+    return nowIso;
+  }
+
+  if (typeof rawTs === 'number' && Number.isFinite(rawTs) && rawTs >= 946684800000) {
+    return new Date(rawTs).toISOString();
+  }
+
+  return nowIso;
+}
 
 function _normalizeRole(role) {
   return role === 'admin' ? 'admin' : 'user';
@@ -130,6 +215,7 @@ function init(server) {
         robotClient = null;
         robotStatus.connected = false;
       }
+      _resolvePendingConfigRequestsOnDisconnect();
       console.log('[WS/robot] ESP32 disconnected');
       _broadcastDashboard({ type: 'ROBOT_CONNECTED', data: { connected: false } });
     });
@@ -240,10 +326,17 @@ async function _handleRobotMsg(ws, msg) {
     case 'STATUS':
       if (data) {
         const normalizedGps = _normalizeGpsData(data.gps);
+        const normalizedState = _normalizeRobotState(
+          data.state,
+          data.stateCode,
+          robotStatus.state,
+          robotStatus.stateCode
+        );
         robotStatus = {
           ...robotStatus,
           mode:     data.mode    ?? robotStatus.mode,
-          state:    data.state   ?? robotStatus.state,
+          state:    normalizedState.stateName,
+          stateCode: normalizedState.stateCode,
           rssi:     data.rssi    ?? robotStatus.rssi,
           uptime:   data.uptime  ?? robotStatus.uptime,
           front:    data.front   ?? robotStatus.front,
@@ -293,6 +386,81 @@ async function _handleRobotMsg(ws, msg) {
       break;
     }
 
+    case 'CONFIG_UPDATE_ACK': {
+      const normalizedTs = _normalizeIsoTimestamp(data?.timestamp);
+      if (data && typeof data === 'object' && data.appliedConfig && typeof data.appliedConfig === 'object') {
+        configCache = {
+          data: { ...data.appliedConfig },
+          source: data.source || 'runtime',
+          timestamp: normalizedTs,
+          cachedAt: Date.now(),
+        };
+      }
+
+      if (pendingConfigUpdate) {
+        const { resolve, timeoutId } = pendingConfigUpdate;
+        clearTimeout(timeoutId);
+        pendingConfigUpdate = null;
+        resolve({
+          success: Boolean(data?.success),
+          status: data?.success ? 200 : 400,
+          data: data || null,
+          error: data?.success ? undefined : (data?.message || 'Failed to save config on ESP32'),
+        });
+      }
+
+      _broadcastDashboard({ type: 'CONFIG_UPDATE_ACK', data: data || {} });
+      break;
+    }
+
+    case 'CONFIG_CURRENT': {
+      if (data && typeof data === 'object') {
+        const { source = 'runtime', timestamp, ...cfg } = data;
+        const normalizedData = {
+          ...cfg,
+          source,
+          timestamp: _normalizeIsoTimestamp(timestamp),
+        };
+
+        configCache = {
+          data: { ...cfg },
+          source: normalizedData.source,
+          timestamp: normalizedData.timestamp,
+          cachedAt: Date.now(),
+        };
+
+        if (pendingConfigGet) {
+          const { resolve, timeoutId } = pendingConfigGet;
+          clearTimeout(timeoutId);
+          pendingConfigGet = null;
+          resolve({
+            success: true,
+            status: 200,
+            cached: false,
+            data: normalizedData,
+          });
+        }
+
+        _broadcastDashboard({ type: 'CONFIG_CURRENT', data: normalizedData });
+        break;
+      }
+
+      if (pendingConfigGet) {
+        const { resolve, timeoutId } = pendingConfigGet;
+        clearTimeout(timeoutId);
+        pendingConfigGet = null;
+        resolve({
+          success: true,
+          status: 200,
+          cached: false,
+          data: data || null,
+        });
+      }
+
+      _broadcastDashboard({ type: 'CONFIG_CURRENT', data: data || {} });
+      break;
+    }
+
     default:
       console.log(`[WS/robot] Unknown type: ${type}`);
   }
@@ -326,6 +494,173 @@ function getRobotStatus() {
   return { ...robotStatus, robotConnected: isRobotConnected() };
 }
 
+function getCachedRobotConfig() {
+  if (!configCache.data) {
+    return null;
+  }
+
+  return {
+    ...configCache.data,
+    source: configCache.source,
+    timestamp: configCache.timestamp,
+  };
+}
+
+function sendConfigUpdate(configData, options = {}) {
+  if (!isRobotConnected()) {
+    return Promise.resolve({
+      success: false,
+      status: 503,
+      error: 'Unable to reach ESP32. Check connection.',
+    });
+  }
+
+  if (pendingConfigUpdate) {
+    return Promise.resolve({
+      success: false,
+      status: 409,
+      error: 'A config update is already in progress',
+    });
+  }
+
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : CONFIG_REQUEST_TIMEOUT_MS;
+
+  return new Promise((resolve) => {
+    const timeoutId = setTimeout(() => {
+      pendingConfigUpdate = null;
+      resolve({
+        success: false,
+        status: 504,
+        error: 'No response from ESP32 (timeout > 5s)',
+      });
+    }, timeoutMs);
+
+    pendingConfigUpdate = { resolve, timeoutId };
+
+    _send(robotClient, {
+      type: 'CONFIG_UPDATE',
+      data: {
+        ...configData,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  });
+}
+
+function sendConfigReset(options = {}) {
+  if (!isRobotConnected()) {
+    return Promise.resolve({
+      success: false,
+      status: 503,
+      error: 'Unable to reach ESP32. Check connection.',
+    });
+  }
+
+  if (pendingConfigUpdate) {
+    return Promise.resolve({
+      success: false,
+      status: 409,
+      error: 'A config update is already in progress',
+    });
+  }
+
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : CONFIG_REQUEST_TIMEOUT_MS;
+
+  return new Promise((resolve) => {
+    const timeoutId = setTimeout(() => {
+      pendingConfigUpdate = null;
+      resolve({
+        success: false,
+        status: 504,
+        error: 'No response from ESP32 (timeout > 5s)',
+      });
+    }, timeoutMs);
+
+    pendingConfigUpdate = { resolve, timeoutId };
+    _send(robotClient, {
+      type: 'CONFIG_RESET',
+      data: { timestamp: new Date().toISOString() },
+    });
+  });
+}
+
+function requestRobotConfig(options = {}) {
+  const cacheTtlMs = Number.isFinite(options.cacheTtlMs) ? options.cacheTtlMs : CONFIG_CACHE_TTL_MS;
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : CONFIG_REQUEST_TIMEOUT_MS;
+  const now = Date.now();
+
+  if (configCache.data && (now - configCache.cachedAt) <= cacheTtlMs) {
+    return Promise.resolve({
+      success: true,
+      status: 200,
+      cached: true,
+      data: {
+        ...configCache.data,
+        source: configCache.source,
+        timestamp: configCache.timestamp,
+      },
+    });
+  }
+
+  if (!isRobotConnected()) {
+    if (configCache.data) {
+      return Promise.resolve({
+        success: true,
+        status: 200,
+        cached: true,
+        stale: true,
+        data: {
+          ...configCache.data,
+          source: configCache.source || 'cache',
+          timestamp: configCache.timestamp,
+        },
+      });
+    }
+
+    return Promise.resolve({
+      success: false,
+      status: 503,
+      error: 'Unable to reach ESP32. Check connection.',
+    });
+  }
+
+  if (pendingConfigGet) {
+    return pendingConfigGet.promise;
+  }
+
+  let resolvePending;
+  const promise = new Promise((resolve) => {
+    resolvePending = resolve;
+  });
+
+  const timeoutId = setTimeout(() => {
+    pendingConfigGet = null;
+    resolvePending({
+      success: false,
+      status: 504,
+      error: 'No response from ESP32 (timeout > 5s)',
+    });
+  }, timeoutMs);
+
+  pendingConfigGet = {
+    promise,
+    resolve: resolvePending,
+    timeoutId,
+  };
+
+  _send(robotClient, { type: 'CONFIG_GET', data: {} });
+  return promise;
+}
+
+function sendDashboardEvent(payload) {
+  if (!payload || typeof payload !== 'object' || !payload.type) {
+    return false;
+  }
+
+  const deliveredCount = _broadcastDashboard(payload);
+  return deliveredCount > 0;
+}
+
 // ── Helpers ────────────────────────────────────────────────────
 function _send(ws, payload) {
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -335,9 +670,39 @@ function _send(ws, payload) {
 
 function _broadcastDashboard(payload) {
   const str = JSON.stringify(payload);
+  let deliveredCount = 0;
   dashboardClients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) client.send(str);
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(str);
+      deliveredCount += 1;
+    }
   });
+
+  return deliveredCount;
+}
+
+function _resolvePendingConfigRequestsOnDisconnect() {
+  if (pendingConfigUpdate) {
+    const { resolve, timeoutId } = pendingConfigUpdate;
+    clearTimeout(timeoutId);
+    pendingConfigUpdate = null;
+    resolve({
+      success: false,
+      status: 503,
+      error: 'Robot disconnected during config update',
+    });
+  }
+
+  if (pendingConfigGet) {
+    const { resolve, timeoutId } = pendingConfigGet;
+    clearTimeout(timeoutId);
+    pendingConfigGet = null;
+    resolve({
+      success: false,
+      status: 503,
+      error: 'Robot disconnected while fetching config',
+    });
+  }
 }
 
 function _normalizeGpsData(rawGps) {
@@ -450,6 +815,11 @@ module.exports = {
   init,
   sendCommandToRobot,
   sendModeChange,
+  sendConfigUpdate,
+  sendConfigReset,
+  requestRobotConfig,
+  getCachedRobotConfig,
+  sendDashboardEvent,
   isRobotConnected,
   getRobotStatus,
   _test: {

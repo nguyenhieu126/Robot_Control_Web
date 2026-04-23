@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { resolveMediaUrl } from "../utils/mediaUrl";
 import "./styles/EventDetail.css";
 
 const STATUS_OPTIONS = ["pending", "processing", "confirmed", "resolved", "dismissed", "false_alarm"];
@@ -21,7 +22,7 @@ export default function EventDetail({ event, mode, onUpdate, onClose, loading })
 
   const previewImage = useMemo(() => {
     if (!event) return "";
-    return event.snapshot_path || event.detection_image_path || "";
+    return resolveMediaUrl(event.snapshot_path || event.detection_image_path || "");
   }, [event]);
 
   if (!event) return null;

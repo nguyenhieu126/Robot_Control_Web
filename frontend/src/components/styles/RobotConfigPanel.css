@@ -1,0 +1,186 @@
+.robot-config-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.robot-config-panel--readonly {
+  align-items: center;
+}
+
+.robot-config-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.robot-config-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.robot-config-head h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.robot-config-head p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.robot-config-refresh {
+  min-width: 86px;
+  height: 34px;
+  border: 1px solid rgba(76, 201, 255, 0.35);
+  border-radius: 10px;
+  background: rgba(76, 201, 255, 0.14);
+  color: #4cc9ff;
+  cursor: pointer;
+}
+
+.robot-config-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.robot-config-meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.robot-config-section h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.robot-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.robot-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.robot-config-field-label-wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.robot-config-field-label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.robot-config-field-range {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.robot-config-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.robot-config-input-wrap input {
+  width: 100%;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-primary);
+  padding: 0 10px;
+  outline: none;
+}
+
+.settings-page--light .robot-config-input-wrap input {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.robot-config-unit {
+  min-width: 36px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.robot-config-alert {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.robot-config-alert--error {
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fecaca;
+}
+
+.settings-page--light .robot-config-alert--error {
+  color: #7f1d1d;
+}
+
+.robot-config-alert--success {
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+}
+
+.settings-page--light .robot-config-alert--success {
+  color: #14532d;
+}
+
+.robot-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.robot-config-actions button {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.robot-config-actions button.primary {
+  border: none;
+  background: linear-gradient(135deg, #1a6bff, #00e5c3);
+  color: #fff;
+}
+
+.robot-config-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .robot-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .robot-config-meta {
+    grid-template-columns: 1fr;
+  }
+}

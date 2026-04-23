@@ -92,13 +92,11 @@ async function initDatabase() {
         const userCount = await dbClient.query('SELECT COUNT(*) FROM users');
         const detectionCount = await dbClient.query('SELECT COUNT(*) FROM detections');
         const eventCount = await dbClient.query('SELECT COUNT(*) FROM abandoned_events');
-        const logCount = await dbClient.query('SELECT COUNT(*) FROM robot_logs');
 
         console.log('\n📈 Sample data:');
         console.log(`   Users: ${userCount.rows[0].count}`);
         console.log(`   Detections: ${detectionCount.rows[0].count}`);
         console.log(`   Events: ${eventCount.rows[0].count}`);
-        console.log(`   Logs: ${logCount.rows[0].count}`);
 
         await dbClient.end();
 
