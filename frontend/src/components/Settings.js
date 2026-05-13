@@ -1,4 +1,17 @@
 import React, { useEffect, useState } from "react";
+import {
+  FaBell,
+  FaClock,
+  FaCompass,
+  FaEye,
+  FaFlask,
+  FaInfoCircle,
+  FaLock,
+  FaMoon,
+  FaRecycle,
+  FaSun,
+  FaThLarge,
+} from "react-icons/fa";
 import "./styles/Settings.css";
 import {
   getBrowserNotificationPermission,
@@ -204,7 +217,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
                       : "linear-gradient(135deg,#f59e0b,#fbbf24)",
                   }}
                 >
-                  {darkMode ? "🌙" : "☀️"}
+                  {darkMode ? <FaMoon aria-hidden="true" /> : <FaSun aria-hidden="true" />}
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">{darkMode ? "Dark Mode" : "Light Mode"}</span>
@@ -220,7 +233,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
             <div className="settings-group">
               <div className="settings-row">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#00c9a7,#00e5c3)" }}>
-                  🔔
+                  <FaBell aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Push Notifications</span>
@@ -231,7 +244,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
 
               <div className="settings-row settings-row--bordered">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#7c3aed,#a78bfa)" }}>
-                  👁
+                  <FaEye aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Notify when tab is focused</span>
@@ -246,7 +259,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
 
               <div className="settings-row settings-row--bordered">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#f97316,#fb923c)" }}>
-                  🧭
+                  <FaCompass aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Notification click opens Events page</span>
@@ -261,7 +274,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
 
               <div className="settings-row settings-row--bordered">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#0ea5e9,#22d3ee)" }}>
-                  🔐
+                  <FaLock aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Browser Permission</span>
@@ -281,7 +294,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
 
               <div className="settings-row">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#22c55e,#4ade80)" }}>
-                  🧪
+                  <FaFlask aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Send test browser notification</span>
@@ -309,7 +322,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
             <div className="settings-group">
               <div className="settings-row settings-row--bordered">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#06b6d4,#22d3ee)" }}>
-                  🧩
+                  <FaThLarge aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Default dashboard card size</span>
@@ -332,7 +345,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
 
               <div className="settings-row settings-row--bordered">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#f59e0b,#fbbf24)" }}>
-                  ⏱
+                  <FaClock aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Alert toast duration</span>
@@ -354,7 +367,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
 
               <div className="settings-row">
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)" }}>
-                  ♻
+                  <FaRecycle aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">Reset interactive settings</span>
@@ -373,7 +386,7 @@ function Settings({ onBack, darkMode, onDarkModeChange, authUser }) {
             <div className="settings-group">
               <div className="settings-row settings-row--nav" onClick={() => setAboutOpen(true)}>
                 <div className="settings-row-icon" style={{ background: "linear-gradient(135deg,#0ea5e9,#38bdf8)" }}>
-                  ℹ
+                  <FaInfoCircle aria-hidden="true" />
                 </div>
                 <div className="settings-row-text">
                   <span className="settings-row-title">About & Credits</span>
