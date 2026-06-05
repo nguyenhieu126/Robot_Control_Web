@@ -1,4 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+  FaBan,
+  FaBolt,
+  FaClock,
+  FaExclamationTriangle,
+  FaHandPaper,
+  FaLock,
+  FaStop,
+} from 'react-icons/fa';
 import Joystick from './Joystick';
 import { useRobotWS }  from '../hooks/useRobotWS';
 import { useRobotApi } from '../hooks/useRobotApi';
@@ -253,8 +262,18 @@ function ManualControl({ onBack, darkMode = true }) {
           {toggling
             ? <span className="mc-spin" />
             : isManual
-              ? <><span className="mc-mode-icon">✋</span> MANUAL MODE</>
-              : <><span className="mc-mode-icon">⚡</span> AUTO MODE</>
+              ? (
+                <>
+                  <FaHandPaper className="mc-mode-icon" aria-hidden="true" />
+                  MANUAL MODE
+                </>
+              )
+              : (
+                <>
+                  <FaBolt className="mc-mode-icon" aria-hidden="true" />
+                  AUTO MODE
+                </>
+              )
           }
         </button>
       </header>
@@ -262,7 +281,7 @@ function ManualControl({ onBack, darkMode = true }) {
       {/* ── OFFLINE BANNER ── */}
       {!robotOnline && (
         <div className="mc-banner mc-banner-warn">
-          <span>⚠</span>
+          <FaExclamationTriangle className="mc-banner-icon" aria-hidden="true" />
           <span>ESP32 is not connected — commands are queued and sent when the robot is online</span>
         </div>
       )}
@@ -335,7 +354,7 @@ function ManualControl({ onBack, darkMode = true }) {
           />
           {!isManual && (
             <div className="mc-joy-lock">
-              <span className="mc-joy-lock-icon">🔒</span>
+              <FaLock className="mc-joy-lock-icon" aria-hidden="true" />
               <span>Chế độ AUTONOMOUS đang hoạt động</span>
               <span style={{fontSize: '12px', opacity: 0.7}}>Nhấn nút MANUAL MODE để điều khiển thủ công</span>
             </div>
@@ -398,7 +417,7 @@ function ManualControl({ onBack, darkMode = true }) {
           onClick={handleStop}
           disabled={!isManual}
         >
-          <span className="mc-btn-icon">⏹</span>
+          <FaStop className="mc-btn-icon" aria-hidden="true" />
           <span className="mc-btn-label">STOP</span>
           <span className="mc-btn-sub">Dừng xe</span>
         </button>
@@ -407,7 +426,7 @@ function ManualControl({ onBack, darkMode = true }) {
           className="mc-action-btn mc-btn-emergency"
           onClick={handleEmergency}
         >
-          <span className="mc-btn-icon">🛑</span>
+          <FaBan className="mc-btn-icon" aria-hidden="true" />
           <span className="mc-btn-label">Emergency</span>
           <span className="mc-btn-sub">Dừng khẩn cấp</span>
         </button>
@@ -433,7 +452,8 @@ function ManualControl({ onBack, darkMode = true }) {
         )}
         {robotStatus.uptime > 0 && (
           <div className="mc-stat-chip chip-neutral">
-            ⏱ {Math.floor(robotStatus.uptime / 60)}m {robotStatus.uptime % 60}s
+            <FaClock className="mc-stat-icon" aria-hidden="true" />
+            {Math.floor(robotStatus.uptime / 60)}m {robotStatus.uptime % 60}s
           </div>
         )}
       </div>

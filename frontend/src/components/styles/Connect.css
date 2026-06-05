@@ -301,7 +301,19 @@
   background: var(--cn-surface2);
   margin-bottom: 14px;
 }
-.cn-status-icon { font-size: 1.8rem; line-height: 1; }
+.cn-status-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cn-status-icon svg { display: block; }
+.cn-status-icon--connected { color: var(--cn-success); }
+.cn-status-icon--connecting { color: var(--cn-warn); }
+.cn-status-icon--disconnected { color: var(--cn-text-dim); }
+.cn-status-icon--error { color: var(--cn-error); }
+.cn-status-spin { animation: cn-spin 0.7s linear infinite; }
 .cn-status-text { display: flex; flex-direction: column; gap: 3px; }
 .cn-status-label {
   font-size: 0.95rem;

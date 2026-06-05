@@ -167,6 +167,12 @@
   overflow: hidden;
 }
 
+.logo-icon-wrap svg,
+.bt-circle svg,
+.icon-badge svg {
+  display: block;
+}
+
 .logo-icon-wrap::after {
   content: '';
   position: absolute;

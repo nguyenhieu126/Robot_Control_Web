@@ -148,6 +148,7 @@
   font-size: 0.82rem;
   border: 1px solid;
 }
+.mc-banner-icon { font-size: 0.95rem; }
 .mc-banner-warn {
   background: rgba(255,170,51,0.10);
   border-color: rgba(255,170,51,0.35);
@@ -711,6 +712,7 @@
   font-weight: 600;
   border: 1px solid;
 }
+.mc-stat-icon { font-size: 0.8rem; }
 .mc-stat-dot {
   width: 7px; height: 7px;
   border-radius: 50%;

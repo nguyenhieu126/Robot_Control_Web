@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { FaCheckCircle, FaPlug, FaSpinner, FaTimesCircle } from "react-icons/fa";
 import { getWsDashboardUrl } from "../utils/runtimeEndpoints";
 import "./styles/Connect.css";
 
@@ -312,9 +313,15 @@ export default function Connect({ onBack, darkMode = true }) {
 
               <div className="cn-status-block">
                 <div className={`cn-status-icon cn-status-icon--${wsState}`}>
-                  {wsState === "connected"    ? "✅" :
-                   wsState === "connecting"   ? "⏳" :
-                   wsState === "error"        ? "❌" : "🔌"}
+                  {wsState === "connected" ? (
+                    <FaCheckCircle aria-hidden="true" />
+                  ) : wsState === "connecting" ? (
+                    <FaSpinner className="cn-status-spin" aria-hidden="true" />
+                  ) : wsState === "error" ? (
+                    <FaTimesCircle aria-hidden="true" />
+                  ) : (
+                    <FaPlug aria-hidden="true" />
+                  )}
                 </div>
                 <div className="cn-status-text">
                   <span className={`cn-status-label cn-status-label--${wsState}`}>{wsStateLabel}</span>

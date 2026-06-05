@@ -1,4 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FaBluetoothB,
+  FaBroadcastTower,
+  FaBriefcase,
+  FaCog,
+  FaHandPaper,
+  FaMap,
+  FaVideo,
+  FaWifi,
+} from "react-icons/fa";
 import { useRobotWS } from "../hooks/useRobotWS";
 import Toast from "./common/Toast";
 import {
@@ -21,21 +31,21 @@ const MENU_ITEMS = [
   {
     id: "connect",
     cls: "card-connect",
-    icon: "📶",
+    icon: FaWifi,
     label: "Connect",
     desc: "Manage device connections",
   },
   {
     id: "manual",
     cls: "card-manual",
-    icon: "✋",
+    icon: FaHandPaper,
     label: "Manual Control",
     desc: "Drive control + live camera",
   },
   {
     id: "cameraView",
     cls: "card-sliders",
-    icon: "🎥",
+    icon: FaVideo,
     label: "Camera View",
     desc: "Live stream only",
   },
@@ -63,21 +73,21 @@ const MENU_ITEMS = [
   {
     id: "map",
     cls: "card-connect",
-    icon: "🗺️",
+    icon: FaMap,
     label: "Map Tracking",
     desc: "Realtime GPS trail",
   },
   {
     id: "events",
     cls: "card-manual",
-    icon: "🧳",
+    icon: FaBriefcase,
     label: "Abandoned Events",
     desc: "Review and update incidents",
   },
   {
     id: "settings",
     cls: "card-settings",
-    icon: "⚙",
+    icon: FaCog,
     label: "Settings",
     desc: "System preferences",
   },
@@ -241,7 +251,9 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
         {/* ── HEADER ── */}
         <header className="header">
           <div className="logo">
-            <div className="logo-icon-wrap">📡</div>
+            <div className="logo-icon-wrap">
+              <FaBroadcastTower aria-hidden="true" />
+            </div>
             <div className="logo-text">
               <h1>KaliVega</h1>
               <p>Controller Dashboard</p>
@@ -331,7 +343,9 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
           </div>
 
           <div className="connection-right">
-            <div className="bt-circle">🔵</div>
+            <div className="bt-circle">
+              <FaBluetoothB aria-hidden="true" />
+            </div>
           </div>
         </div>
 
@@ -339,13 +353,18 @@ function Dashboard({ onNavigate, onLogout, darkMode = true, allowedMenuIds = [],
         <div className="menu-section">
           <p className="section-label">Navigation</p>
           <div className="menu">
-            {visibleMenuItems.map((item) => (
-              <div key={item.id} className={`card ${item.cls}`} onClick={() => handleCardClick(item.id)}>
-                <div className="icon-badge">{item.icon}</div>
-                <span className="card-label">{item.label}</span>
-                <span className="card-desc">{item.desc}</span>
-              </div>
-            ))}
+            {visibleMenuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.id} className={`card ${item.cls}`} onClick={() => handleCardClick(item.id)}>
+                  <div className="icon-badge">
+                    <Icon aria-hidden="true" />
+                  </div>
+                  <span className="card-label">{item.label}</span>
+                  <span className="card-desc">{item.desc}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 

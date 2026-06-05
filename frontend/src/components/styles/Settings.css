@@ -223,6 +223,7 @@
   box-shadow: 0 3px 12px rgba(0,0,0,0.2);
   transition: background 0.35s;
 }
+.settings-row-icon svg { display: block; }
 
 .settings-row-text {
   flex: 1;
