@@ -17,7 +17,7 @@ import './styles/ManualControl.css';
 const API_BASE = getApiBaseUrl();
 const STREAM_ENDPOINT = `${API_BASE}/api/camera/stream`;
 const STEER_SIGN = -1;
-const MAX_STEER_DEG = 45;
+const MAX_STEER_DEG = 50;
 
 const STATE_NAMES = [
   'INIT','NORMAL','SLOW','AVOID_L','AVOID_R',
