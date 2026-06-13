@@ -16,6 +16,8 @@ import './styles/ManualControl.css';
 
 const API_BASE = getApiBaseUrl();
 const STREAM_ENDPOINT = `${API_BASE}/api/camera/stream`;
+const STEER_SIGN = -1;
+const MAX_STEER_DEG = 50;
 
 const STATE_NAMES = [
   'INIT','NORMAL','SLOW','AVOID_L','AVOID_R',
@@ -126,8 +128,11 @@ function ManualControl({ onBack, darkMode = true }) {
       const { x, y } = joystickVal.current;
       if (!joystickActive.current && x === 0 && y === 0) return;
 
-      const spd = Math.round(-y * speedRef.current); // up → positive = forward
-      const str = Math.round(x * 45);               // right → positive
+      // const spd = Math.round(-y * speedRef.current); // up → positive = forward
+      // const str = Math.round(x * 45);               // right → positive
+      // sendDirect('JOYSTICK', { speed: spd, steer: str });
+      const spd = Math.round(-y * speedRef.current);       // up → positive = forward
+      const str = Math.round(x * MAX_STEER_DEG * STEER_SIGN); // đảo chiều servo thực tế
       sendDirect('JOYSTICK', { speed: spd, steer: str });
     }, 150);
 
@@ -212,10 +217,19 @@ function ManualControl({ onBack, darkMode = true }) {
   }, []);
 
   // ── Steer slider manual apply ──
+  // const handleSteerApply = useCallback(() => {
+  //   if (isManual) {
+  //     const dir = steer >= 0 ? 'RIGHT' : 'LEFT';
+  //     sendDirect('TURN', { direction: dir, angle: Math.abs(steer) });
+  //   }
+  // }, [isManual, steer, sendDirect]);
   const handleSteerApply = useCallback(() => {
     if (isManual) {
-      const dir = steer >= 0 ? 'RIGHT' : 'LEFT';
-      sendDirect('TURN', { direction: dir, angle: Math.abs(steer) });
+      // `steer` là giá trị theo UI: dương = phải, âm = trái.
+      // `servoSteer` là giá trị thực gửi xuống robot sau khi đảo chiều servo.
+      const servoSteer = steer * STEER_SIGN;
+      const dir = servoSteer >= 0 ? 'RIGHT' : 'LEFT';
+      sendDirect('TURN', { direction: dir, angle: Math.abs(servoSteer) });
     }
   }, [isManual, steer, sendDirect]);
 

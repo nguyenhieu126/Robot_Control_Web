@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles/CameraView.css";
 
-const DEFAULT_STREAM_URL = "http://10.247.65.55:8080/stream.mjpg";
+const DEFAULT_STREAM_URL = "http://192.168.1.11:8080/stream.mjpg";
 const STREAM_ENDPOINT = process.env.REACT_APP_CAMERA_DIRECT_STREAM_URL || DEFAULT_STREAM_URL;
 
 function formatTime(ts) {
